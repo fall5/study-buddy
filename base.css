@@ -1,0 +1,109 @@
+/* ═══════════════════════════════════════════════════════════
+   STUDY BUDDY — base.css
+   Variables · Fonts · Reset · Body · Night Mode
+   ═══════════════════════════════════════════════════════════ */
+
+/* ──────────── GOOGLE FONTS ──────────── */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+/* ──────────── RESET ──────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ──────────── CSS VARIABLES ──────────── */
+:root {
+  /* Purple palette */
+  --purple-dark:    #3b0764;
+  --purple-mid:     #6d28d9;
+  --purple-bright:  #7c3aed;
+  --purple-light:   #8b5cf6;
+  --purple-glow:    #a78bfa;
+  --purple-soft:    #c4b5fd;
+
+  /* Backgrounds */
+  --bg-page:        #ffffff;
+  --bg-hero:        radial-gradient(ellipse 80% 60% at 50% 0%, #ede9fe 0%, #ffffff 70%);
+  --bg-content:     #ffffff;
+  --bg-card:        #faf5ff;
+  --bg-auth:        #ffffff;
+  --bg-panel:       #f5f3ff;
+  --bg-sidebar:     #faf5ff;
+  --bg-app:         #f3f0fa;
+  --bg-main:        #f3f0fa;
+
+  /* Text */
+  --text-primary:   #1e0a3c;
+  --text-muted:     #6d28d9;
+  --text-sub:       #4c2889;
+  --text-light:     #7b6fa0;
+
+  /* Borders */
+  --border-card:    #e9d5ff;
+  --border-input:   #ddd6fe;
+  --border-panel:   #c4b5fd;
+
+  /* Inputs */
+  --input-bg:       #faf5ff;
+  --accent:         #f5f3ff;
+
+  /* Layout */
+  --nav-h:          64px;
+  --sidebar-w:      248px;
+  --trans:          .25s ease;
+
+  /* Typography */
+  --font-display:   'Syne', 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+  --font-body:      'DM Sans', 'Nunito', 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ──────────── NIGHT MODE ──────────── */
+body.night {
+  --bg-page:      #0d0a14;
+  --bg-hero:      radial-gradient(ellipse 80% 60% at 50% 0%, #1a0a2e 0%, #0d0a14 70%);
+  --bg-content:   #0d0a14;
+  --bg-card:      #160d28;
+  --bg-auth:      #160d28;
+  --bg-panel:     #120921;
+  --bg-sidebar:   #110820;
+  --bg-app:       #0d0a14;
+  --bg-main:      #0d0a14;
+
+  --text-primary: #ede9fe;
+  --text-muted:   #a78bfa;
+  --text-sub:     #c4b5fd;
+  --text-light:   #8b78b8;
+
+  --border-card:  #2d1b5e;
+  --border-input: #2d1b5e;
+  --border-panel: #4c1d95;
+
+  --input-bg:     #1a0a2e;
+  --accent:       #1a0a2e;
+}
+
+/* ──────────── BASE ──────────── */
+html {
+  height: 100%;
+  background: #ffffff;
+  color-scheme: light;
+}
+
+body {
+  height: 100%;
+  font-family: var(--font-body);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  transition: background var(--trans), color var(--trans);
+}
+
+body.night { background: #0d0a14; }
+html:has(body.night) { background: #0d0a14; }
+
+/* ──────────── GLOBAL ANIMATIONS ──────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
