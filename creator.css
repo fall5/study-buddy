@@ -720,6 +720,21 @@ body.night .sidebar-item-creator {
   .creator-stat           { display: none; }
   .creator-stat--money    { display: flex; flex-direction: column; align-items: center; padding: 8px 12px; min-width: 0; }
   .creator-stat--withdraw { display: flex; padding: 0; }
+
+  /* Money row: prevent overflow on narrow screens */
+  .creator-dash-money-row { padding: 8px 10px; gap: 8px; }
+  .creator-dash-money-val { font-size: clamp(.85rem, 3.5vw, 1.2rem); max-width: 44vw; }
+  .creator-dash-money-lbl { display: none; }
+
+  /* Withdraw button: icon-only on small screens */
+  .creator-withdraw-btn .creator-withdraw-label { display: none; }
+  .creator-withdraw-btn { padding: 8px 10px; gap: 0; min-width: 36px; justify-content: center; }
+
+  /* Products grid: single column */
+  .creator-products-grid { grid-template-columns: 1fr; }
+
+  /* Tab content: tighter padding */
+  .creator-tab-content > div { padding: 16px 12px !important; }
 }
 
 /* ── New card components (cp- / qb- / pm-) ── */
@@ -878,25 +893,6 @@ body.night .sidebar-item-creator {
   border: 1.5px solid var(--brand-base); background: transparent; color: var(--brand-base);
 }
 .cp-btn-share:hover { background: var(--brand-base); color: #fff; }
-
-/* ── Store CTA button (buyer view — Buy / Get Free / ✓ Purchased) ── */
-.cp-btn-cta {
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 9px 14px; border-radius: 10px; width: 100%;
-  background: var(--brand-base); color: #fff; border: none;
-  font-family: var(--font-display); font-size: .82rem; font-weight: 700;
-  cursor: pointer; transition: background .18s, transform .12s;
-}
-.cp-btn-cta:hover { background: var(--navy-light); transform: translateY(-1px); }
-.cp-btn-cta:active { transform: translateY(0); }
-.cp-btn-cta--owned {
-  background: rgba(13,43,66,.12);
-  color: var(--text-light);
-  cursor: default;
-}
-.cp-btn-cta--owned:hover { background: rgba(13,43,66,.12); transform: none; }
-body.night .cp-btn-cta--owned { background: rgba(255,255,255,.08); color: var(--text-light); }
-body.night .cp-btn-cta--owned:hover { background: rgba(255,255,255,.08); }
 
 .creator-subs-grid {
   display: grid;
@@ -1790,16 +1786,7 @@ body.night .cp-btn-cta--owned:hover { background: rgba(255,255,255,.08); }
   align-items: flex-start;
   justify-content: space-between;
 }
-.an-card-icon {
-  width: 32px; height: 32px;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--accent);
-  border-radius: 8px;
-  margin-bottom: 10px;
-  color: var(--brand-base);
-  flex-shrink: 0;
-}
-.an-card-icon svg { width: 18px; height: 18px; stroke: var(--brand-base); }
+.an-card-icon { font-size: 1.2rem; line-height: 1; margin-bottom: 8px; }
 .an-card-val {
   font-family: var(--font-display);
   font-size: 1.5rem; font-weight: 800;

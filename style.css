@@ -327,29 +327,6 @@ nav.app-top-nav::after { content:''; position:absolute;bottom:0;left:0;right:0;h
 
 .app-top-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
-.app-notif-btn {
-  position: relative;
-  display: flex; align-items: center; justify-content: center;
-  width: 40px; height: 40px;
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.2);
-  border-radius: 50%;
-  cursor: pointer; transition: background .2s;
-  color: #fff; flex-shrink: 0;
-  padding: 0;
-}
-.app-notif-btn svg { width: 18px; height: 18px; }
-.app-notif-btn:hover { background: rgba(255,255,255,.2); }
-.app-notif-dot {
-  display: none;
-  position: absolute;
-  top: 7px; right: 7px;
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: #e8b468;
-  border: 2px solid var(--nav-bg, #0d2b42);
-}
-.app-notif-dot.active { display: block; }
 .app-logout-btn {
   display: flex; align-items: center; gap: 6px;
   background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
@@ -1124,11 +1101,11 @@ body.night .app-sidebar.sidebar-collapsed .sidebar-profile:hover {
   }
   .mobile-drawer-logout:hover svg { stroke: #ef4444; }
   body.night .mobile-drawer-logout:hover {
-    background: var(--status-danger-bg);
-    border-color: var(--status-danger-bdr);
-    color: var(--status-danger-txt);
+    background: rgba(239,68,68,.12);
+    border-color: rgba(239,68,68,.35);
+    color: #fca5a5;
   }
-  body.night .mobile-drawer-logout:hover svg { stroke: var(--status-danger-txt); }
+  body.night .mobile-drawer-logout:hover svg { stroke: #fca5a5; }
 
   /* ── Feed page ── */
   #app-feed .feed-main {
@@ -1149,6 +1126,7 @@ body.night .app-sidebar.sidebar-collapsed .sidebar-profile:hover {
   #app-feed .feed-topfilter-bar .feed-topfilter-selects { display: none; }
   #app-feed .feed-topfilter-bar .feed-filter-clear-btn  { display: none !important; }
   #app-feed .feed-topfilter-bar .feed-search-wrap { flex: 1; }
+  #app-feed .feed-topfilter-bar .feed-creator-toggle-btn { display: none !important; }
 
   .feed-mobile-filter-btn {
     display: inline-flex; align-items: center; gap: 6px;
