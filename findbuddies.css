@@ -1,0 +1,647 @@
+/* ═══════════════════════════════════════════════════════════
+   STUDY BUDDY — findbuddies.css
+   All styles for the Find Buddies page (app-findbuddies section)
+   Depends on: base.css (CSS variables), style.css (layout shell)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════
+   FIND BUDDIES — Search Bar
+══════════════════════════════════════ */
+.buddy-search-bar { display: flex; flex-direction: column; gap: 12px; margin-bottom: 6px; }
+.buddy-search-input {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg-card); border: 1.5px solid var(--border-input);
+  border-radius: var(--radius-md); padding: 0 16px;
+  transition: border-color .2s, background var(--trans);
+}
+.buddy-search-input:focus-within { border-color: var(--brand-base); }
+.buddy-search-input svg { width: 18px; height: 18px; color: var(--text-light); flex-shrink: 0; }
+.buddy-search-input input {
+  flex: 1; border: none; outline: none; padding: 12px 0;
+  font-family: var(--font-body); font-size: .95rem;
+  color: var(--text-primary); background: transparent;
+  transition: color var(--trans);
+}
+.buddy-search-input input::placeholder { color: var(--text-light); }
+
+/* ══════════════════════════════════════
+   FIND BUDDIES — Filters
+══════════════════════════════════════ */
+.buddy-filters { display: flex; gap: 10px; flex-wrap: wrap; }
+.buddy-filters select {
+  padding: 9px 14px; border: 1.5px solid var(--border-input);
+  border-radius: var(--radius-md); font-family: var(--font-body); font-size: .88rem;
+  color: var(--text-primary); background: var(--bg-card); outline: none;
+  cursor: pointer; transition: border-color .2s, background var(--trans), color var(--trans);
+}
+.buddy-filters select:focus { border-color: var(--brand-base); }
+.buddy-filters select:hover{
+  background: var(--brand-base);
+  color: #fff;
+}
+
+/* ══════════════════════════════════════
+   FIND BUDDIES — Grid Layout
+══════════════════════════════════════ */
+.buddy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 18px;
+  margin-top: 4px;
+}
+
+/* ══════════════════════════════════════
+   FIND BUDDIES — Buddy Card
+══════════════════════════════════════ */
+.buddy-card {
+  background: var(--bg-card); border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg); padding: 22px 18px 0; text-align: center;
+  display: flex; flex-direction: column; min-height: 380px;
+  transition: transform .2s, box-shadow .2s, background var(--trans), border-color var(--trans);
+}
+.buddy-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(13,43,66,.13);
+}
+
+.buddy-card-avatar {
+  width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800; font-size: 1.3rem; color: #fff;
+  flex-shrink: 0;
+}
+
+.buddy-card h4 {
+  font-family: var(--font-display);
+  font-size: .97rem; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 4px;
+  transition: color var(--trans);
+}
+.buddy-card .buddy-headline {
+  font-size: .8rem; color: var(--text-light);
+  margin-bottom: 10px; transition: color var(--trans);
+}
+
+/* Flex spacer — pushes footer to the bottom */
+.buddy-card-spacer { flex: 1; }
+
+/* body-col is a passthrough on desktop — mobile activates it via media query */
+.buddy-card-body-col {
+  display: contents;
+}
+
+/* ══════════════════════════════════════
+   FIND BUDDIES — Subject Tags
+   Clamped to 3 rows (~78px), scrollable with fade-out hint
+══════════════════════════════════════ */
+.buddy-subjects-wrap {
+  position: relative;
+  width: 100%;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+.buddy-subjects {
+  width: 100%;
+  max-height: 78px;
+  overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-mid) transparent;
+}
+.buddy-subjects::-webkit-scrollbar { width: 3px; }
+.buddy-subjects::-webkit-scrollbar-thumb { background: var(--brand-mid); border-radius: 4px; }
+.buddy-subjects::-webkit-scrollbar-track { background: transparent; }
+
+.buddy-subjects-fade {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 22px;
+  background: linear-gradient(to bottom, transparent, var(--bg-card));
+  pointer-events: none;
+  transition: opacity .2s;
+}
+.buddy-subjects-fade.hidden { opacity: 0; }
+
+.buddy-subj-tag {
+  background: var(--accent); border: 1px solid var(--border-panel);
+  border-radius: var(--radius-md); padding: 3px 10px; font-size: .72rem;
+  color: var(--brand-mid); font-weight: 600;
+}
+
+.buddy-card-meta {
+  font-size: .75rem; color: var(--text-light);
+  margin-bottom: 0; transition: color var(--trans);
+}
+
+/* ══════════════════════════════════════
+   FIND BUDDIES — Card Action Buttons
+   Unified style: both buttons share .buddy-card-btn base.
+   Primary (Connect / Message) gets .buddy-card-btn--primary.
+   Disabled/sent state gets .buddy-card-btn--sent.
+══════════════════════════════════════ */
+.buddy-card-actions {
+  padding: 12px 0 16px;
+  border-top: 1px solid var(--border-card);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.buddy-card-btn {
+  width: 100%; padding: 9px 14px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  border-radius: var(--radius-md); border: 1.5px solid var(--border-panel);
+  background: transparent; color: var(--brand-accent);
+  font-family: var(--font-body);
+  font-size: .84rem; font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.buddy-card-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+.buddy-card-btn:hover {
+  background: var(--brand-base); border-color: var(--brand-base); color: #fff;
+}
+
+.buddy-card-btn--primary {
+  background: var(--brand-base); border-color: var(--brand-base); color: #fff;
+}
+.buddy-card-btn--primary:hover { background: var(--brand-mid); border-color: var(--brand-mid); }
+
+.buddy-card-btn--sent {
+  background: transparent; border-color: var(--border-input);
+  color: var(--text-light); cursor: default;
+}
+.buddy-card-btn--sent:hover {
+  background: transparent; border-color: var(--border-input); color: var(--text-light);
+}
+
+/* Keep legacy class names as aliases so any leftover HTML still works */
+.connect-btn { display: none; }
+.buddy-view-btn { display: none; }
+.buddy-msg-btn { display: none; }
+
+/* ════════════════════════════════════════════════════════════
+   NIGHT MODE — SLATE
+════════════════════════════════════════════════════════════ */
+body.night .buddy-card          { background: var(--bg-card); border-color: var(--border-card); }
+body.night .buddy-card:hover    { box-shadow: 0 10px 28px rgba(13,43,66,.15); }
+body.night .buddy-subj-tag      { background: var(--border-card); border-color: var(--border-input); color: var(--text-muted); }
+body.night .buddy-subjects-fade { background: linear-gradient(to bottom, transparent, var(--bg-card)); }
+body.night .buddy-card-actions  { border-top-color: var(--border-card); }
+body.night .buddy-card-btn      { border-color: var(--border-panel); color: var(--text-muted); }
+body.night .buddy-card-btn:hover { background: var(--brand-base); border-color: var(--brand-base); color: #fff; }
+body.night .buddy-card-btn--sent { border-color: var(--border-input); color: #475569; }
+body.night .buddy-card-btn--sent:hover { background: transparent; border-color: var(--border-input); color: #475569; }
+body.night .buddy-search-input  { background: var(--bg-card); border-color: var(--border-input); }
+body.night .buddy-filters select { background: var(--bg-card); border-color: var(--border-input); color: var(--text-primary); }
+body.night .buddy-filters select:hover { background: var(--brand-base); color: #fff; }
+body.night .connect-btn         { border-color: var(--brand-base); color: var(--brand-base); }
+body.night .connect-btn.requested { background: var(--border-card); color: var(--text-light); border-color: var(--border-input); }
+
+/* ════════════════════════════════════════════════════════════
+   MOBILE — Option B: Single-column list layout (<640px)
+   Cards switch from centered grid tiles to horizontal list rows.
+   Avatar sits left; name, headline, tags, and actions flow right.
+   Filters scroll horizontally instead of wrapping.
+════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   ACTION ROW — search + filter button + toggle
+════════════════════════════════════════════════════════════ */
+.buddy-action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.buddy-action-row .buddy-search-input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Fixed-width wrapper locks the two toggle buttons so they never cause reflow */
+.buddy-btn-group {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  width: 290px;
+}
+.buddy-btn-group .buddy-creator-toggle-btn,
+.buddy-btn-group .buddy-toggle-btn {
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+  width: auto;
+}
+
+/* ── Filter button ── */
+.buddy-filter-wrap { position: relative; flex-shrink: 0; }
+
+.buddy-filter-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px;
+  border: 1.5px solid var(--border-input);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-light);
+  font-family: var(--font-body);
+  font-size: .88rem; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+  flex-shrink: 0; position: relative;
+  transition: border-color .18s, background .18s, color .18s;
+}
+.buddy-filter-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; flex-shrink: 0; }
+.buddy-filter-btn:hover,
+.buddy-filter-btn.open {
+  border-color: var(--brand-base);
+  background: var(--accent);
+  color: var(--brand-base);
+}
+.buddy-filter-dot {
+  position: absolute; top: 7px; right: 7px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--brand-base);
+  display: none;
+}
+.buddy-filter-btn.has-filters .buddy-filter-dot { display: block; }
+
+/* ── Active filter pills ── */
+.buddy-active-pills {
+  display: none;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+.buddy-active-pills.visible { display: flex; }
+
+.buddy-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--accent); border: 1px solid var(--border-panel);
+  border-radius: var(--radius-md); padding: 4px 11px;
+  font-size: .75rem; color: var(--brand-mid); font-weight: 600;
+}
+.buddy-pill-x {
+  display: inline-flex; align-items: center;
+  cursor: pointer; color: var(--brand-mid);
+  opacity: .7; transition: opacity .15s;
+}
+.buddy-pill-x:hover { opacity: 1; }
+.buddy-pill-x svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2.5; }
+
+/* ── Desktop dropdown ── */
+.buddy-filter-dropdown {
+  position: absolute;
+  top: calc(100% + 6px); right: 0;
+  width: 300px;
+  background: var(--bg-content, #fff);
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 28px rgba(13,43,66,.13);
+  padding: 16px;
+  z-index: 120;
+  display: none;
+}
+.buddy-filter-dropdown.open { display: block; }
+
+.buddy-filter-dropdown-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.buddy-filter-dropdown-header span {
+  font-family: var(--font-display);
+  font-size: .88rem; font-weight: 800; color: var(--text-primary);
+}
+.buddy-filter-clear-all {
+  font-family: var(--font-body);
+  font-size: .76rem; font-weight: 600;
+  color: var(--brand-base); background: none; border: none; cursor: pointer;
+}
+
+.buddy-filter-group { margin-bottom: 12px; }
+.buddy-filter-group:last-of-type { margin-bottom: 0; }
+.buddy-filter-group label {
+  display: block; font-size: .78rem; font-weight: 600;
+  color: var(--text-primary); margin-bottom: 5px;
+}
+.buddy-filter-group select {
+  width: 100%; padding: 8px 11px;
+  border: 1.5px solid var(--border-input); border-radius: 9px;
+  font-family: var(--font-body); font-size: .85rem;
+  color: var(--text-primary); background: var(--bg-card);
+  outline: none; transition: border-color .18s;
+}
+.buddy-filter-group select:focus { border-color: var(--brand-base); }
+
+.buddy-filter-dropdown-footer {
+  display: flex; gap: 8px; margin-top: 14px;
+}
+.buddy-filter-apply {
+  flex: 1; padding: 9px;
+  background: var(--brand-base); color: #fff;
+  border: none; border-radius: 9px;
+  font-family: var(--font-display); font-size: .84rem; font-weight: 700;
+  cursor: pointer; transition: background .18s;
+}
+.buddy-filter-apply:hover { background: var(--brand-mid); }
+.buddy-filter-cancel {
+  padding: 9px 14px;
+  background: transparent; color: var(--text-light);
+  border: 1.5px solid var(--border-input); border-radius: 9px;
+  font-family: var(--font-body); font-size: .84rem; font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── My Buddies toggle ── */
+.buddy-toggle-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--border-input);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: .82rem; font-weight: 600;
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  transition: border-color .18s, background .18s, color .18s;
+}
+.buddy-toggle-btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; flex-shrink: 0; }
+.buddy-toggle-btn:hover {
+  border-color: var(--brand-base);
+  color: var(--brand-base);
+  background: var(--accent);
+}
+.buddy-toggle-btn.active {
+  background: var(--brand-base); color: #fff;
+  border-color: var(--brand-base);
+}
+.count-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; border-radius: 9px; padding: 0 5px;
+  font-size: .66rem; font-weight: 700;
+  background: var(--brand-base); color: #fff;
+  transition: background .2s;
+}
+.buddy-toggle-btn.active .count-badge { background: rgba(255,255,255,.3); color: var(--brand-base); }
+
+/* ── Night mode — all new components ── */
+body.night .buddy-filter-btn { background: var(--bg-card); border-color: var(--border-input); color: var(--text-sub); }
+body.night .buddy-filter-btn.open,
+body.night .buddy-filter-btn:hover { background: var(--border-card); border-color: var(--brand-base); color: var(--brand-base); }
+body.night .buddy-filter-dropdown { background: var(--bg-card); border-color: var(--border-card); box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+body.night .buddy-filter-group select { background: var(--bg-panel); border-color: var(--border-input); color: var(--text-primary); }
+body.night .buddy-pill { background: var(--border-card); border-color: var(--border-input); color: var(--text-muted); }
+body.night .buddy-toggle-btn {
+  background: var(--bg-card); border-color: var(--border-input); color: var(--text-sub);
+}
+body.night .buddy-toggle-btn:hover {
+  border-color: var(--brand-base); color: var(--brand-base); background: var(--accent);
+}
+body.night .buddy-toggle-btn.active {
+  background: var(--brand-base); color: var(--navy-dark); border-color: var(--brand-base);
+}
+
+/* ════════════════════════════════════════════════════════════
+   MOBILE — Option B: Single-column list layout (<640px)
+   Cards switch from centered grid tiles to horizontal list rows.
+   Avatar sits left; name, headline, tags, and actions flow right.
+════════════════════════════════════════════════════════════ */
+/* Sheet and overlay are mobile-only — hidden on desktop */
+.buddy-sheet-overlay,
+.buddy-filter-sheet {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .buddy-sheet-overlay,
+  .buddy-filter-sheet {
+    display: block;
+  }
+
+  /* ── Action row: stack search on top, buttons below ── */
+  .buddy-action-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .buddy-action-row .buddy-search-input {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+  .buddy-btn-group {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+  .buddy-filter-btn  { padding: 9px 12px; font-size: .84rem; width: 100%; justify-content: center; }
+  .buddy-toggle-btn  { padding: 9px 12px; font-size: .84rem; }
+
+  /* ── Search bar ── */
+  .buddy-search-input { padding: 0 14px; }
+  .buddy-search-input input { padding: 12px 0; font-size: .93rem; }
+
+  /* ── Hide desktop dropdown ── */
+  .buddy-filter-dropdown { display: none !important; }
+
+  /* ── Grid → single column ── */
+  .buddy-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  /* ── Card → horizontal list row ── */
+  .buddy-card {
+    flex-direction: row;
+    text-align: left;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 14px 0;
+    border-radius: var(--radius-lg);
+    min-height: 0;
+  }
+  .buddy-card:hover { transform: none; box-shadow: none; }
+  .buddy-card-spacer { display: none; }
+
+  /* ── Avatar ── */
+  .buddy-card-avatar {
+    width: 44px; height: 44px;
+    font-size: 1rem;
+    margin: 0; flex-shrink: 0;
+  }
+
+  /* ── Inner body column ── */
+  .buddy-card-body-col {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column;
+  }
+
+  .buddy-card h4 {
+    font-size: .88rem; margin-bottom: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .buddy-card .buddy-headline {
+    font-size: .74rem; margin-bottom: 7px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ── Subject tags — 2-row cap + scroll on mobile ── */
+  .buddy-subjects-wrap { margin-bottom: 7px; }
+  .buddy-subjects {
+    justify-content: flex-start;
+    max-height: 52px;
+  }
+
+  .buddy-card-meta { font-size: .72rem; margin-bottom: 0; }
+
+  /* ── Actions: side by side, flush to card bottom ── */
+  .buddy-card-actions {
+    flex-direction: row;
+    gap: 6px;
+    padding: 8px 0 12px;
+    border-top: none;
+    margin-top: 8px;
+  }
+  .buddy-card-btn {
+    flex: 1; padding: 7px 8px;
+    font-size: .74rem;
+  }
+
+  /* ── Night mode in list layout ── */
+  body.night .buddy-card:hover { box-shadow: none; }
+
+  /* ════════════════════════════════════════
+     BOTTOM SHEET — filter panel
+  ════════════════════════════════════════ */
+  .buddy-sheet-overlay {
+    position: fixed; inset: 0;
+    background: rgba(7,29,46,.45);
+    z-index: 200;
+    opacity: 0; pointer-events: none;
+    transition: opacity .28s ease;
+  }
+  .buddy-sheet-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .buddy-filter-sheet {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--bg-card);
+    border-radius: 20px 20px 0 0;
+    padding: 12px 18px 32px;
+    z-index: 201;
+    transform: translateY(100%);
+    transition: transform .28s ease;
+    box-shadow: 0 -6px 32px rgba(13,43,66,.14);
+  }
+  .buddy-filter-sheet.open { transform: translateY(0); }
+
+  .buddy-sheet-handle {
+    width: 38px; height: 4px; border-radius: 2px;
+    background: var(--border-panel);
+    margin: 0 auto 16px;
+  }
+
+  .buddy-sheet-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .buddy-sheet-header span {
+    font-family: var(--font-display);
+    font-size: .97rem; font-weight: 800; color: var(--text-primary);
+  }
+  .buddy-sheet-clear-all {
+    font-family: var(--font-body); font-size: .8rem; font-weight: 600;
+    color: var(--brand-base); background: none; border: none; cursor: pointer;
+  }
+
+  .buddy-filter-sheet .buddy-filter-group { margin-bottom: 14px; }
+  .buddy-filter-sheet .buddy-filter-group label { font-size: .82rem; margin-bottom: 6px; }
+  .buddy-filter-sheet .buddy-filter-group select {
+    padding: 11px 13px; font-size: .9rem; border-radius: var(--radius-md);
+  }
+
+  .buddy-sheet-footer { display: flex; gap: 10px; margin-top: 6px; }
+  .buddy-sheet-footer .buddy-filter-apply { padding: 12px; font-size: .9rem; border-radius: var(--radius-md); }
+  .buddy-sheet-footer .buddy-filter-cancel { padding: 12px 18px; font-size: .9rem; border-radius: var(--radius-md); }
+
+  /* Night mode — sheet */
+  body.night .buddy-filter-sheet { background: var(--bg-card); box-shadow: 0 -6px 32px rgba(0,0,0,.4); }
+  body.night .buddy-sheet-handle { background: var(--border-input); }
+  body.night .buddy-filter-sheet .buddy-filter-group select { background: var(--bg-panel); border-color: var(--border-input); color: var(--text-primary); }
+}
+
+/* ── Find Buddies: Creators-only toggle button ── */
+.buddy-creator-toggle-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 9px 14px;
+  border: 1.5px solid var(--border-input);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: .84rem; font-weight: 600;
+  cursor: pointer; flex-shrink: 0;
+  transition: border-color .18s, background .18s, color .18s;
+  white-space: nowrap;
+}
+.buddy-creator-toggle-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+.buddy-creator-toggle-btn:hover {
+  border-color: var(--brand-base);
+  color: var(--brand-base);
+}
+.buddy-creator-toggle-btn.active {
+  background: var(--brand-base);
+  border-color: var(--brand-base);
+  color: #fff;
+}
+body.night .buddy-creator-toggle-btn {
+  background: var(--bg-card); border-color: var(--border-input); color: var(--text-sub);
+}
+body.night .buddy-creator-toggle-btn:hover {
+  border-color: var(--brand-base); color: var(--brand-base);
+}
+body.night .buddy-creator-toggle-btn.active {
+  background: var(--brand-base); border-color: var(--brand-base); color: #fff;
+}
+
+
+
+
+/* ════════════════════════════════════════════════════════════
+   NIGHT MODE — FIND BUDDIES CONTRAST FIXES
+════════════════════════════════════════════════════════════ */
+body.night .match-card:hover {
+  border-color: var(--brand-base);
+  box-shadow: 0 10px 28px rgba(91,163,217,.13);
+}
+body.night .match-badge { background: var(--brand-base); color: var(--navy-dark); }
+body.night .match-tab.active {
+  background: var(--brand-base);
+  color: var(--navy-dark);
+  border-color: var(--brand-base);
+}
+body.night .match-tab:hover {
+  color: var(--brand-base);
+  border-color: var(--brand-base);
+}
+body.night .match-accept {
+  color: var(--brand-base);
+  border-color: var(--brand-base);
+}
+body.night .match-accept:hover {
+  background: var(--brand-base);
+  color: var(--navy-dark);
+}
+
+
+/* ═══════════════════════════════════════════════════
+   BUDDY CARD AVATARS — ensure navy/gold scheme
+   CSS fallback in case any DB-stored purple value
+   slips through the JS sanitizer.
+═══════════════════════════════════════════════════ */
+.buddy-card-avatar {
+  /* If no inline bg is set, default to navy gradient */
+  background: linear-gradient(135deg, #0d2b42, #c8882a);
+}

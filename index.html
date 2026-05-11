@@ -1,0 +1,2844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Lock color-scheme so browser default tint never interferes -->
+  <meta name="color-scheme" content="light" />
+  <!-- Prevent flash of white before CSS paint on file:// -->
+  <meta name="theme-color" content="#0d2b42" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Buddy</title>
+  <!-- Preconnect speeds up font load; helps on both file:// and http:// -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <!-- Base tokens, reset, night mode — must load first -->
+  <link rel="stylesheet" href="base.css" />
+  <!-- Page-specific stylesheets -->
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="profile.css" />
+  <link rel="stylesheet" href="creator.css" />
+  <link rel="stylesheet" href="findbuddies.css" />
+  <link rel="stylesheet" href="messages.css" />
+  <link rel="stylesheet" href="notepad.css" />
+  <link rel="stylesheet" href="landing.css" />
+  <style>
+    :root { --nav-h: 60px; }
+    /* Logo image sizing — constrained to nav height */
+    .lnd-nav-logo img, .nav-logo img {
+      height: 46px;
+      width: auto;
+      display: block;
+      object-fit: contain;
+    }
+    /* Ensure nav never grows taller than --nav-h */
+    .lnd-nav, nav.app-top-nav {
+      height: var(--nav-h) !important;
+      overflow: visible;
+    }
+    /* Auth/content pages — push content below fixed nav */
+    #page-signin .content,
+    #page-register .content,
+    #page-p4 .content {
+      padding-top: var(--nav-h);
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ████████████████████████████████████████
+     PUBLIC PAGES  (no login required)
+     ████████████████████████████████████████ -->
+
+<!-- ═══════════ LANDING PAGE ═══════════ -->
+<div class="page active" id="page-home">
+
+  <!-- ── Top Nav ── -->
+  <nav class="lnd-nav" id="lnd-nav">
+    <div class="lnd-nav-logo" onclick="logoClick()" title="Study Buddy">
+      <img src="logo.png" alt="StudyBuddy Finder">
+    </div>
+
+    <!-- Desktop links -->
+    <div class="lnd-nav-links">
+      <button class="lnd-nav-link" onclick="navigate('p4')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Contact
+      </button>
+      <button class="lnd-nav-night" onclick="toggleNightMode()" title="Toggle night mode">
+        <svg class="night-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        Night
+      </button>
+      <button class="lnd-nav-ghost" onclick="navigate('signin')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Log in
+      </button>
+    </div>
+
+    <!-- Mobile hamburger -->
+    <button class="lnd-nav-hamburger" id="lnd-hamburger" onclick="toggleLndDrawer()" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </nav>
+
+  <!-- Mobile bottom sheet backdrop + drawer -->
+  <div class="lnd-sheet-backdrop" id="lnd-backdrop" onclick="toggleLndDrawer()"></div>
+  <div class="lnd-nav-drawer" id="lnd-drawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="lnd-sheet-handle"></div>
+    <div class="lnd-sheet-grid">
+      <button class="lnd-sheet-item" onclick="navigate('home');toggleLndDrawer()">
+        <svg class="lnd-sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="lnd-sheet-item" onclick="openFaqModal();toggleLndDrawer()">
+        <svg class="lnd-sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>FAQ</span>
+      </button>
+      <button class="lnd-sheet-item" onclick="navigate('p4');toggleLndDrawer()">
+        <svg class="lnd-sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>Contact</span>
+      </button>
+      <button class="lnd-sheet-item" onclick="toggleNightMode()">
+        <svg class="lnd-sheet-icon night-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <span>Night mode</span>
+      </button>
+    </div>
+    <div class="lnd-sheet-actions">
+      <button class="lnd-sheet-login" onclick="navigate('signin');toggleLndDrawer()">Log in</button>
+      <button class="lnd-sheet-cta" onclick="navigate('register');toggleLndDrawer()">Get started free →</button>
+    </div>
+  </div>
+
+  <div class="landing-content">
+
+    <!-- ── Hero ── -->
+    <section class="lnd-hero">
+      <div class="lnd-hero-inner">
+      <div class="lnd-hero-left">
+        <div class="lnd-hero-badge">
+          <div class="lnd-hero-badge-dot"></div>
+          10,000+ students studying smarter
+        </div>
+        <h1 class="lnd-hero-h1">Study <em>smarter</em>,<br>together.</h1>
+        <p class="lnd-hero-p">Connect with study partners, track your progress, and access every tool you need — all in one place.</p>
+        <div class="lnd-cta-row">
+          <button class="lnd-btn-primary" onclick="navigate('register')">Get started free →</button>
+          <button class="lnd-btn-ghost" onclick="openFaqModal()">FAQ</button>
+        </div>
+        <div class="lnd-trust">
+          <div class="lnd-trust-avatars">
+            <div class="lnd-trust-av" style="background:#143352">A</div>
+            <div class="lnd-trust-av" style="background:#0d2b42">M</div>
+            <div class="lnd-trust-av" style="background:#071d2e">P</div>
+            <div class="lnd-trust-av" style="background:#071d2e">J</div>
+          </div>
+          &nbsp;&nbsp;Joined by students this week
+        </div>
+      </div>
+
+      <div class="lnd-hero-panel">
+        <div class="lnd-feat-row">
+          <div class="lnd-feat-icon">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <div class="lnd-feat-title">Find Study Buddies</div>
+            <div class="lnd-feat-sub">Match by subject, schedule &amp; style</div>
+          </div>
+        </div>
+        <div class="lnd-feat-row">
+          <div class="lnd-feat-icon">
+            <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          </div>
+          <div>
+            <div class="lnd-feat-title">Live Sessions</div>
+            <div class="lnd-feat-sub">Video, whiteboard &amp; shared notepad</div>
+          </div>
+        </div>
+        <div class="lnd-feat-row">
+          <div class="lnd-feat-icon">
+            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div>
+            <div class="lnd-feat-title">Progress Tracking</div>
+            <div class="lnd-feat-sub">Real-time insights into every session</div>
+          </div>
+        </div>
+        <div class="lnd-hero-pills">
+          <span class="lnd-hero-pill">Feed</span>
+          <span class="lnd-hero-pill">Messages</span>
+          <span class="lnd-hero-pill">Sessions</span>
+          <span class="lnd-hero-pill">Notepad</span>
+          <span class="lnd-hero-pill">Creator Hub</span>
+        </div>
+      </div>
+      </div><!-- /lnd-hero-inner -->
+    </section>
+
+    <!-- ── How It Works ── -->
+    <section class="lnd-how" id="lnd-how">
+      <div class="lnd-how-inner">
+      <span class="lnd-section-label">How it works</span>
+      <h2 class="lnd-section-title">Up and studying in three steps</h2>
+      <p class="lnd-section-sub">No complicated setup — just sign up and start connecting.</p>
+      <div class="lnd-steps">
+        <div class="lnd-step">
+          <div class="lnd-step-num">1</div>
+          <h3>Create your profile</h3>
+          <p>Set your subjects, study schedule, and learning style so we can find your best matches.</p>
+        </div>
+        <div class="lnd-step">
+          <div class="lnd-step-num">2</div>
+          <h3>Find your match</h3>
+          <p>Browse students with compatible goals and subjects and send a connect request.</p>
+        </div>
+        <div class="lnd-step">
+          <div class="lnd-step-num">3</div>
+          <h3>Study together</h3>
+          <p>Start a live session with video, whiteboard, shared notes, and a Pomodoro timer.</p>
+        </div>
+      </div>
+      </div><!-- /lnd-how-inner -->
+    </section>
+
+    <!-- ── Core Features ── -->
+    <section class="lnd-features" id="lnd-features">
+      <div class="lnd-features-inner">
+      <div class="lnd-features-header">
+        <span class="lnd-section-label">Features</span>
+        <h2 class="lnd-section-title">Everything you need to study better</h2>
+        <p class="lnd-section-sub">Powerful modules built for students, all in one place.</p>
+      </div>
+      <div class="lnd-feat-grid">
+        <div class="lnd-feat-card">
+          <div class="lnd-feat-card-icon">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3>Find Buddies</h3>
+          <p>Search and filter students by subject, schedule, course, and learning style.</p>
+        </div>
+        <div class="lnd-feat-card">
+          <div class="lnd-feat-card-icon">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h3>Messaging</h3>
+          <p>DMs and group chats with real-time notifications for all your connected study partners.</p>
+        </div>
+        <div class="lnd-feat-card">
+          <div class="lnd-feat-card-icon">
+            <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          </div>
+          <h3>Live Sessions</h3>
+          <p>Video rooms with built-in Pomodoro timer, collaborative whiteboard, and real-time chat.</p>
+        </div>
+        <div class="lnd-feat-card">
+          <div class="lnd-feat-card-icon">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <h3>Notepad</h3>
+          <p>Rich text notes with folders, whiteboard canvas, and auto-save across all your devices.</p>
+        </div>
+      </div>
+      </div><!-- /lnd-features-inner -->
+    </section>
+
+    <!-- ── Creator Hub ── -->
+    <section class="lnd-creator" id="lnd-creator">
+      <div class="lnd-creator-inner">
+
+        <!-- Left: pitch -->
+        <div>
+          <div class="lnd-creator-badge">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Creator Hub
+          </div>
+          <h2 class="lnd-creator-h2">Share your knowledge.<br>Earn from it.</h2>
+          <p class="lnd-creator-desc">Apply to become a Study Buddy Creator and turn your notes, expertise, and quizzes into a learning community — with built-in tools to monetize your content.</p>
+
+          <div class="lnd-creator-perks">
+            <div class="lnd-creator-perk">
+              <div class="lnd-creator-perk-icon">
+                <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+              </div>
+              <div>
+                <h4>Sell study materials</h4>
+                <p>Publish paid notes, guides, and resource packs students can purchase directly from your profile.</p>
+              </div>
+            </div>
+            <div class="lnd-creator-perk">
+              <div class="lnd-creator-perk-icon">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div>
+                <h4>Build a subscriber community</h4>
+                <p>Set a monthly subscription and give members ongoing access to all your exclusive content.</p>
+              </div>
+            </div>
+            <div class="lnd-creator-perk">
+              <div class="lnd-creator-perk-icon">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
+              <div>
+                <h4>Create interactive quizzes</h4>
+                <p>Build and publish quizzes — free for everyone or gated for subscribers only.</p>
+              </div>
+            </div>
+            <div class="lnd-creator-perk">
+              <div class="lnd-creator-perk-icon">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              </div>
+              <div>
+                <h4>Analytics dashboard</h4>
+                <p>Track revenue, subscriber count, product sales, and quiz performance in one view.</p>
+              </div>
+            </div>
+          </div>
+
+          <button class="lnd-creator-apply-btn" onclick="navigate('register')">
+            Apply to become a creator →
+          </button>
+        </div>
+
+        <!-- Right: feature cards -->
+        <div class="lnd-creator-cards">
+
+          <!-- Products -->
+          <div class="lnd-creator-card">
+            <div class="lnd-creator-card-header">
+              <div class="lnd-creator-card-icon" style="background:#143352">
+                <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+              </div>
+              <div>
+                <div class="lnd-creator-card-label">Feature</div>
+                <div class="lnd-creator-card-title">Products</div>
+              </div>
+            </div>
+            <p class="lnd-creator-card-body">Sell one-time study materials — notes, cheat sheets, or resource packs — at any price you set.</p>
+            <div class="lnd-mock-row">
+              <span class="lnd-mock-name">DSA Master Notes</span>
+              <span class="lnd-mock-val">₱149</span>
+            </div>
+            <div class="lnd-mock-row">
+              <span class="lnd-mock-name">OOP Cheat Sheet</span>
+              <span class="lnd-mock-val">₱79</span>
+            </div>
+            <div class="lnd-creator-tags">
+              <span class="lnd-creator-tag">One-time purchase</span>
+              <span class="lnd-creator-tag">Instant delivery</span>
+              <span class="lnd-creator-tag">Any price</span>
+            </div>
+          </div>
+
+          <!-- Subscriptions -->
+          <div class="lnd-creator-card">
+            <div class="lnd-creator-card-header">
+              <div class="lnd-creator-card-icon" style="background:#0d2b42">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div>
+                <div class="lnd-creator-card-label">Feature</div>
+                <div class="lnd-creator-card-title">Subscriptions</div>
+              </div>
+            </div>
+            <p class="lnd-creator-card-body">Build a recurring community. Students pay monthly for exclusive access to all your content.</p>
+            <div class="lnd-mock-row">
+              <span class="lnd-mock-name">Alex's CS Community · ₱99/mo</span>
+              <span class="lnd-mock-badge">42 members</span>
+            </div>
+            <div class="lnd-mock-row">
+              <span class="lnd-mock-name">Math with Priya · ₱149/mo</span>
+              <span class="lnd-mock-badge">18 members</span>
+            </div>
+            <div class="lnd-creator-tags">
+              <span class="lnd-creator-tag">Monthly billing</span>
+              <span class="lnd-creator-tag">Subscriber-only content</span>
+            </div>
+          </div>
+
+          <!-- Quiz Maker -->
+          <div class="lnd-creator-card">
+            <div class="lnd-creator-card-header">
+              <div class="lnd-creator-card-icon" style="background:#071d2e">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
+              <div>
+                <div class="lnd-creator-card-label">Feature</div>
+                <div class="lnd-creator-card-title">Quiz Maker</div>
+              </div>
+            </div>
+            <p class="lnd-creator-card-body">Build interactive multiple-choice quizzes. Publish free or gate them for subscribers only.</p>
+            <div class="lnd-mock-quiz-q">What is the time complexity of binary search?</div>
+            <div class="lnd-mock-opts">
+              <div class="lnd-mock-opt">O(n)</div>
+              <div class="lnd-mock-opt correct">O(log n) ✓</div>
+              <div class="lnd-mock-opt">O(n²)</div>
+            </div>
+            <div class="lnd-creator-tags">
+              <span class="lnd-creator-tag">Free or paid</span>
+              <span class="lnd-creator-tag">Multiple choice</span>
+              <span class="lnd-creator-tag">Instant scoring</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CTA Banner ── -->
+    <section class="lnd-cta-banner">
+      <div>
+        <h2>Ready to study smarter?</h2>
+        <p>Join thousands of students already on Study Buddy — free to get started.</p>
+      </div>
+      <button class="lnd-cta-btn" onclick="navigate('register')">Create free account →</button>
+    </section>
+
+  </div><!-- /landing-content -->
+</div>
+
+<!-- ═══════════ SIGN IN PAGE ═══════════ -->
+<div class="page" id="page-signin">
+  <nav class="lnd-nav">
+    <div class="lnd-nav-logo" onclick="logoClick()" title="Study Buddy">
+      <img src="logo.png" alt="StudyBuddy Finder">
+    </div>
+    <div class="lnd-nav-links">
+      <button class="lnd-nav-link" onclick="navigate('p4')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Contact
+      </button>
+      <button class="lnd-nav-night" onclick="toggleNightMode()">
+        <svg class="night-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        Night
+      </button>
+      <button class="lnd-nav-ghost" onclick="navigate('signin')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Log in
+      </button>
+    </div>
+    <button class="lnd-nav-hamburger" id="signin-hamburger" onclick="toggleDrawer('signin-drawer')" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </nav>
+  <div class="lnd-sheet-backdrop" id="signin-backdrop" onclick="toggleDrawer('signin-drawer')"></div>
+  <div class="lnd-nav-drawer" id="signin-drawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="lnd-sheet-handle"></div>
+    <div class="lnd-sheet-grid lnd-sheet-grid-2">
+      <button class="lnd-sheet-item" onclick="navigate('p4');toggleDrawer('signin-drawer')">
+        <svg class="lnd-sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>Contact</span>
+      </button>
+      <button class="lnd-sheet-item" onclick="toggleNightMode()">
+        <svg class="lnd-sheet-icon night-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <span>Night mode</span>
+      </button>
+    </div>
+    <div class="lnd-sheet-actions">
+      <button class="lnd-sheet-cta" onclick="navigate('signin');toggleDrawer('signin-drawer')">Sign In →</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <h2>Welcome back 👋</h2>
+        <p class="sub">Sign in to your Study Buddy account to continue.</p>
+        <div id="login-error" class="login-error" style="display:none">Invalid email or password. Please try again.</div>
+        <div class="field"><label>Email Address</label><input type="email" id="login-email" placeholder="you@example.com" /></div>
+        <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••" /></div>
+        <button class="auth-submit" onclick="handleLogin()">Sign In →</button>
+        <div class="auth-divider">or</div>
+        <div class="auth-alt">Don't have an account? <a onclick="navigate('register')">Register free</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ REGISTER PAGE ═══════════ -->
+<div class="page" id="page-register">
+  <nav class="lnd-nav">
+    <div class="lnd-nav-logo" onclick="logoClick()" title="Study Buddy">
+      <img src="logo.png" alt="StudyBuddy Finder">
+    </div>
+    <div class="lnd-nav-links">
+      <button class="lnd-nav-link" onclick="navigate('p4')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Contact
+      </button>
+      <button class="lnd-nav-night" onclick="toggleNightMode()">
+        <svg class="night-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        Night
+      </button>
+      <button class="lnd-nav-ghost" onclick="navigate('signin')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Log in
+      </button>
+    </div>
+    <button class="lnd-nav-hamburger" id="register-hamburger" onclick="toggleDrawer('register-drawer')" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </nav>
+  <div class="lnd-sheet-backdrop" id="register-backdrop" onclick="toggleDrawer('register-drawer')"></div>
+  <div class="lnd-nav-drawer" id="register-drawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="lnd-sheet-handle"></div>
+    <div class="lnd-sheet-grid lnd-sheet-grid-2">
+      <button class="lnd-sheet-item" onclick="navigate('p4');toggleDrawer('register-drawer')">
+        <svg class="lnd-sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>Contact</span>
+      </button>
+      <button class="lnd-sheet-item" onclick="toggleNightMode()">
+        <svg class="lnd-sheet-icon night-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <span>Night mode</span>
+      </button>
+    </div>
+    <div class="lnd-sheet-actions">
+      <button class="lnd-sheet-login" onclick="navigate('signin');toggleDrawer('register-drawer')">Sign in</button>
+      <button class="lnd-sheet-cta" onclick="navigate('register');toggleDrawer('register-drawer')">Register free →</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <h2>Create your account 🎓</h2>
+        <p class="sub">Join thousands of students already using Study Buddy.</p>
+        <div id="register-error"   class="login-error"     style="display:none"></div>
+        <div id="register-success" class="register-success" style="display:none"></div>
+        <div class="field"><label>Full Name</label><input type="text"     id="reg-name"     placeholder="Your full name" /></div>
+        <div class="field"><label>Email Address</label><input type="email"    id="reg-email"    placeholder="you@example.com" /></div>
+        <div class="field">
+          <label>Password <span class="field-hint">(min. 6 characters)</span></label>
+          <input type="password" id="reg-password" placeholder="Create a strong password" oninput="updatePasswordStrength(this.value)" />
+        </div>
+        <div class="field"><label>Confirm Password</label><input type="password" id="reg-confirm"  placeholder="Repeat your password" /></div>
+        <div class="pw-strength-wrap" id="pw-strength-wrap" style="display:none">
+          <div class="pw-strength-bar"><div class="pw-strength-fill" id="pw-strength-fill"></div></div>
+          <span class="pw-strength-label" id="pw-strength-label">Weak</span>
+        </div>
+        <!-- ── Account type picker ── -->
+        <div class="field" style="margin-bottom:8px">
+          <label>I want to…</label>
+          <div class="reg-type-picker" id="reg-type-picker">
+            <label class="reg-type-card reg-type-active" id="reg-type-student" onclick="setRegAccountType('student')">
+              <input type="radio" name="reg-account-type" value="student" checked style="display:none" />
+              <span class="reg-type-icon">📚</span>
+              <div class="reg-type-info">
+                <div class="reg-type-title">Study as a Student</div>
+                <div class="reg-type-sub">Find buddies, join sessions, access free content</div>
+              </div>
+              <span class="reg-type-check" id="reg-check-student">✓</span>
+            </label>
+            <label class="reg-type-card" id="reg-type-creator" onclick="setRegAccountType('creator')">
+              <input type="radio" name="reg-account-type" value="creator" style="display:none" />
+              <span class="reg-type-icon">✦</span>
+              <div class="reg-type-info">
+                <div class="reg-type-title">Become a Creator</div>
+                <div class="reg-type-sub">Sell notes, run quizzes, build a subscriber community</div>
+              </div>
+              <span class="reg-type-check" id="reg-check-creator" style="display:none">✓</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- ── Creator inline fields (hidden by default) ── -->
+        <div id="reg-creator-fields" style="display:none;overflow:hidden">
+          <div class="field">
+            <label>Creator / Brand Name</label>
+            <input type="text" id="reg-brand" placeholder="e.g. Alex's CS Notes" />
+          </div>
+          <div class="field">
+            <label>Primary Subject Area</label>
+            <select id="reg-subject" style="width:100%;padding:11px 14px;border:1.5px solid var(--border-input);border-radius:10px;font-family:var(--font-body);font-size:.93rem;color:var(--text-primary);background:var(--input-bg);outline:none;transition:border-color .2s">
+              <option value="">Select a subject…</option>
+              <option>Computer Science</option><option>Mathematics</option><option>Physics</option>
+              <option>Biology</option><option>Chemistry</option><option>Business</option>
+              <option>Engineering</option><option>Literature</option><option>History</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Planned Subscription Price <span class="field-hint">(₱/month, optional)</span></label>
+            <input type="number" id="reg-price" placeholder="e.g. 99" min="0" />
+          </div>
+        </div>
+
+        <button class="auth-submit" onclick="handleRegister()">Create Account →</button>
+        <div class="auth-divider">or</div>
+        <div class="auth-alt">Already have an account? <a onclick="navigate('signin')">Sign in</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CONTACT PAGE ═══════════ -->
+<div class="page" id="page-p4">
+  <nav class="lnd-nav">
+    <div class="lnd-nav-logo" onclick="logoClick()" title="Study Buddy">
+      <img src="logo.png" alt="StudyBuddy Finder">
+    </div>
+    <div class="lnd-nav-links">
+      <button class="lnd-nav-link lnd-nav-active" onclick="navigate('p4')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Contact
+      </button>
+      <button class="lnd-nav-night" onclick="toggleNightMode()">
+        <svg class="night-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        Night
+      </button>
+      <button class="lnd-nav-ghost" onclick="navigate('signin')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Log in
+      </button>
+    </div>
+    <button class="lnd-nav-hamburger" id="p4-hamburger" onclick="toggleDrawer('p4-drawer')" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </nav>
+  <div class="lnd-sheet-backdrop" id="p4-backdrop" onclick="toggleDrawer('p4-drawer')"></div>
+  <div class="lnd-nav-drawer" id="p4-drawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="lnd-sheet-handle"></div>
+    <div class="lnd-sheet-grid">
+      <button class="lnd-sheet-item" onclick="navigate('home');toggleDrawer('p4-drawer')">
+        <svg class="lnd-sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="lnd-sheet-item" onclick="openFaqModal();toggleDrawer('p4-drawer')">
+        <svg class="lnd-sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>FAQ</span>
+      </button>
+      <button class="lnd-sheet-item lnd-sheet-item-active" onclick="navigate('p4');toggleDrawer('p4-drawer')">
+        <svg class="lnd-sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>Contact</span>
+      </button>
+      <button class="lnd-sheet-item" onclick="toggleNightMode()">
+        <svg class="lnd-sheet-icon night-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <span>Night mode</span>
+      </button>
+    </div>
+    <div class="lnd-sheet-actions">
+      <button class="lnd-sheet-login" onclick="navigate('signin');toggleDrawer('p4-drawer')">Log in</button>
+      <button class="lnd-sheet-cta" onclick="navigate('register');toggleDrawer('p4-drawer')">Get started free →</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- ── Centered hero ── -->
+    <div class="p4-hero">
+      <h1 class="p4-h1">Contact <em>Study Buddy</em></h1>
+      <p class="p4-sub">We're here to help. Reach out to us for support, partnerships, or any questions you may have.</p>
+    </div>
+
+    <!-- ── Team section ── -->
+    <div class="p4-team-wrap">
+      <h2 class="p4-team-title">Our Team</h2>
+      <p class="p4-team-sub">The people behind Study Buddy</p>
+      <div class="p4-team-grid">
+        <div class="p4-member">
+          <div class="p4-avatar" style="background:linear-gradient(135deg,#071d2e,#0d2b42)">AR</div>
+          <div class="p4-mname">Alexandra Rivera</div>
+          <div class="p4-mrole">Chief Executive Officer</div>
+          <div class="p4-memail">a.rivera@studybuddy.io</div>
+        </div>
+        <div class="p4-member">
+          <div class="p4-avatar" style="background:linear-gradient(135deg,#0d2b42,#c8882a)">MC</div>
+          <div class="p4-mname">Marcus Chen</div>
+          <div class="p4-mrole">Head of Engineering</div>
+          <div class="p4-memail">m.chen@studybuddy.io</div>
+        </div>
+        <div class="p4-member">
+          <div class="p4-avatar" style="background:linear-gradient(135deg,#143352,#c8dcea)">PN</div>
+          <div class="p4-mname">Priya Nair</div>
+          <div class="p4-mrole">Lead UX Designer</div>
+          <div class="p4-memail">p.nair@studybuddy.io</div>
+        </div>
+        <div class="p4-member">
+          <div class="p4-avatar" style="background:linear-gradient(135deg,#071d2e,#1e4d73)">JT</div>
+          <div class="p4-mname">Jordan Taylor</div>
+          <div class="p4-mrole">Product Manager</div>
+          <div class="p4-memail">j.taylor@studybuddy.io</div>
+        </div>
+        <div class="p4-member">
+          <div class="p4-avatar" style="background:linear-gradient(135deg,#143352,#e8b468)">SM</div>
+          <div class="p4-mname">Sofia Mendes</div>
+          <div class="p4-mrole">Marketing Director</div>
+          <div class="p4-memail">s.mendes@studybuddy.io</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Reach Us + Form card ── -->
+    <div class="p4-main-wrap">
+      <div class="p4-main-card">
+
+        <div class="p4-reach-col">
+          <h2 class="p4-reach-title">Reach Us</h2>
+          <p class="p4-reach-sub">Have a question or need assistance? We'd love to hear from you.</p>
+          <div class="p4-reach-items">
+            <div class="p4-reach-item">
+              <div class="p4-reach-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </div>
+              <div><div class="p4-reach-label">Email</div><div class="p4-reach-val">support@studybuddy.io</div></div>
+            </div>
+            <div class="p4-reach-item">
+              <div class="p4-reach-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.24h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82A16 16 0 0 0 16 16.91l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </div>
+              <div><div class="p4-reach-label">Phone</div><div class="p4-reach-val">+63 (800) 555-STUDY</div></div>
+            </div>
+            <div class="p4-reach-item">
+              <div class="p4-reach-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+              <div><div class="p4-reach-label">Location</div><div class="p4-reach-val">Philippines</div></div>
+            </div>
+            <div class="p4-reach-item">
+              <div class="p4-reach-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div><div class="p4-reach-label">Response time</div><div class="p4-reach-val">Mon–Fri, 8 AM – 8 PM</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p4-card-divider"></div>
+
+        <div class="p4-form-col">
+          <h2 class="p4-reach-title">Send us a Message</h2>
+          <div class="p4-form-row-2">
+            <div class="p4-field"><input class="p4-input" type="text" placeholder="Your Name" /></div>
+            <div class="p4-field"><input class="p4-input" type="email" placeholder="Your Email" /></div>
+          </div>
+          <div class="p4-field"><input class="p4-input" type="text" placeholder="Subject" /></div>
+          <div class="p4-field"><textarea class="p4-textarea" placeholder="Your Message"></textarea></div>
+          <button class="p4-submit">Send Message →</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── CTA Banner ── -->
+    <section class="lnd-cta-banner">
+      <div>
+        <h2>Ready to study smarter?</h2>
+        <p>Join thousands of students already on Study Buddy — free to get started.</p>
+      </div>
+      <button class="lnd-cta-btn" onclick="navigate('register')">Create free account →</button>
+    </section>
+
+  </div>
+</div>
+
+
+<!-- ████████████████████████████████████████
+     APP SHELL  (after login)
+     ████████████████████████████████████████ -->
+<div class="page" id="page-app">
+
+  <!-- App Top Nav -->
+  <nav class="app-top-nav">
+    <!-- Sidebar toggle button — collapses sidebar to icon rail.
+         Calls toggleSidebar() defined in app.js.
+         aria-expanded reflects current state (managed by JS).
+         When sidebar is extracted to its own file, move this
+         button into that file's topnav slot. -->
+    <button class="sidebar-toggle-btn" id="sidebar-toggle-btn"
+            onclick="toggleSidebar()"
+            aria-expanded="true"
+            aria-controls="app-sidebar"
+            title="Toggle sidebar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <div class="nav-logo app-logo" onclick="logoClick()">
+      <img src="logo.png" alt="StudyBuddy Finder">
+    </div>
+    <!-- App top search -->
+    <div class="app-top-search" id="app-search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="app-search-input" placeholder="Search students by name…"
+        oninput="handleSearchInput(this.value)"
+        onkeydown="handleSearchKeydown(event)"
+        autocomplete="off" />
+      <!-- Live search dropdown -->
+      <div class="search-dropdown" id="search-dropdown"></div>
+    </div>
+    <div class="app-top-right">
+      <div class="nav-btn night-btn" onclick="toggleNightMode()">
+        <svg class="night-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        Night
+      </div>
+      <button class="app-logout-btn" onclick="openLogoutModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Log Out
+      </button>
+    </div>
+  </nav>
+
+  <!-- App Body: Sidebar + Main -->
+  <div class="app-body">
+
+    <!-- SIDEBAR -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <!-- Profile card — click to go to My Profile -->
+      <!-- Sidebar profile card — centered, squircle-ring, soft card.
+           Column layout: avatar on top, name + handle below.
+           All appearance rules now live in style.css under
+           .sidebar-profile / .sidebar-avatar. -->
+      <div class="sidebar-profile" onclick="appNav('profile')">
+        <div class="sidebar-avatar" id="sidebar-avatar">A</div>
+        <div class="sidebar-name" id="sidebar-name">Alex Johnson</div>
+        <div class="sidebar-handle" id="sidebar-handle">@alexj · Student</div>
+      </div>
+      <div class="sidebar-divider"></div>
+
+      <!-- Nav items -->
+      <nav class="sidebar-nav">
+        <div class="sidebar-item active" id="snav-feed" title="Feed" onclick="appNav('feed')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span class="sidebar-label">Feed</span>
+          <span class="sidebar-badge" id="feed-jr-badge" style="display:none"></span>
+        </div>
+        <div class="sidebar-item" id="snav-findbuddies" title="Find Buddies" onclick="appNav('findbuddies')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span class="sidebar-label">Find Buddies</span>
+        </div>
+        <div class="sidebar-item" id="snav-mymatches" title="My Matches" onclick="appNav('mymatches')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span class="sidebar-label">My Matches</span>
+        </div>
+        <div class="sidebar-item" id="snav-messages" title="Messages" onclick="appNav('messages')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span class="sidebar-label">Messages</span>
+        </div>
+        <div class="sidebar-item" id="snav-notepad" title="Notepad" onclick="appNav('notepad')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span class="sidebar-label">Notepad</span>
+        </div>
+        <div class="sidebar-item" id="snav-backpack" title="Backpack" onclick="appNav('backpack')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v10H4V10z"/><path d="M9 6V5a3 3 0 0 1 6 0v1"/><line x1="12" y1="11" x2="12" y2="16"/><line x1="9.5" y1="13.5" x2="14.5" y2="13.5"/></svg>
+          <span class="sidebar-label">Backpack</span>
+        </div>
+        <div class="sidebar-item" id="snav-sessions" title="Sessions" onclick="appNav('sessions')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          <span class="sidebar-label">Sessions</span>
+          <span class="sidebar-badge" id="sessions-live-badge" style="display:none;background:#22c55e">●</span>
+        </div>
+        <!-- Creator Hub — discrete, no loud gradient border -->
+        <div class="sidebar-item sidebar-item-creator" id="snav-creator" title="Creator Hub" onclick="appNav('creator')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span class="sidebar-label">Creator Hub</span>
+          <span class="sidebar-creator-badge" id="creator-nav-badge" style="display:none">✦</span>
+        </div>
+      </nav>
+
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-footer">
+        <p>Study Buddy &copy; 2026</p>
+        <p>Version 1.0</p>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="app-main">
+
+      <!-- ─── MY PROFILE ─── -->
+      <section class="app-section" id="app-profile">
+        <!-- Rendered dynamically by profile.js → renderMyProfile() -->
+        <div style="display:flex;align-items:center;justify-content:center;flex:1;color:var(--text-light);font-size:.9rem">Loading profile…</div>
+      </section>
+
+      <!-- ─── VIEW PROFILE (other users) ─── -->
+      <section class="app-section" id="app-viewprofile">
+        <!-- Rendered dynamically by profile.js → renderViewProfile() -->
+      </section>
+
+      <!-- ─── FEED ─── -->
+      <section class="app-section active" id="app-feed">
+        <div class="feed-layout">
+          <!-- ── TOP: Inline filter bar ── -->
+          <div class="feed-topfilter-bar" id="feed-filter-bar">
+            <div class="feed-search-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="feed-search-input" placeholder="Search posts…" oninput="applyFeedFilters()" autocomplete="off" />
+            </div>
+            <div class="feed-topfilter-selects">
+              <select id="feed-filter-subject" class="feed-topfilter-select" onchange="applyFeedFilters()">
+                  <option value="">All Subjects</option>
+                  <optgroup label="── Computer Science">
+                    <option>Data Structures and Algorithms</option><option>Discrete Mathematics</option>
+                    <option>Object-Oriented Programming</option><option>Database Management Systems</option>
+                    <option>Operating Systems</option><option>Computer Networks</option>
+                    <option>Software Engineering</option><option>Artificial Intelligence</option>
+                    <option>Machine Learning</option><option>Web Development</option>
+                    <option>Mobile Application Development</option><option>Cybersecurity</option>
+                    <option>Cloud Computing</option>
+                  </optgroup>
+                  <optgroup label="── Information Technology">
+                    <option>Information Management</option><option>Systems Analysis and Design</option>
+                    <option>Database Administration</option><option>Network Administration</option>
+                    <option>Web Systems and Technologies</option><option>Human-Computer Interaction</option>
+                    <option>IT Project Management</option><option>Information Assurance and Security</option>
+                    <option>Integrative Programming</option>
+                  </optgroup>
+                  <optgroup label="── Multimedia Computing">
+                    <option>Digital Arts and Design</option><option>Computer Animation</option>
+                    <option>Game Development</option><option>3D Modeling</option>
+                    <option>Video Production</option><option>Motion Graphics</option>
+                    <option>Sound Design</option><option>User Experience Design</option>
+                  </optgroup>
+                  <optgroup label="── Business & Accountancy">
+                    <option>Financial Accounting</option><option>Managerial Accounting</option>
+                    <option>Cost Accounting</option><option>Auditing Theory</option>
+                    <option>Taxation</option><option>Marketing Management</option>
+                    <option>Human Resource Management</option><option>Operations Management</option>
+                    <option>Financial Management</option><option>Strategic Management</option>
+                    <option>Entrepreneurship</option>
+                  </optgroup>
+                  <optgroup label="── Engineering">
+                    <option>Circuit Theory</option><option>Digital Electronics</option>
+                    <option>Signals and Systems</option><option>Communications Engineering</option>
+                    <option>Control Systems</option><option>Microprocessors and Microcontrollers</option>
+                    <option>Embedded Systems</option><option>Operations Research</option>
+                    <option>Quality Control</option>
+                  </optgroup>
+                  <optgroup label="── Health Sciences">
+                    <option>Anatomy and Physiology</option><option>Pharmacology</option>
+                    <option>Medical-Surgical Nursing</option><option>Clinical Chemistry</option>
+                    <option>Hematology</option><option>Medical Microbiology</option>
+                    <option>Pharmaceutical Chemistry</option><option>Radiographic Positioning</option>
+                  </optgroup>
+                  <optgroup label="── Social Sciences & Education">
+                    <option>General Psychology</option><option>Developmental Psychology</option>
+                    <option>Social Psychology</option><option>Abnormal Psychology</option>
+                    <option>Child and Adolescent Development</option><option>Curriculum Development</option>
+                    <option>Introduction to Criminology</option><option>Criminal Law</option>
+                    <option>Forensic Science</option>
+                  </optgroup>
+                </select>
+              <select id="feed-filter-schedule" class="feed-topfilter-select" onchange="applyFeedFilters()">
+                <option value="">Any Schedule</option>
+                <option>Morning</option><option>Afternoon</option><option>Evening</option><option>Weekends</option>
+              </select>
+              <select id="feed-filter-location" class="feed-topfilter-select" onchange="applyFeedFilters()">
+                <option value="">Any Location</option>
+                <option>Online</option><option>Library</option><option>Campus</option><option>Café</option><option>Dormitory</option>
+              </select>
+            </div>
+            <!-- Mobile: filter button + active pills -->
+            <button class="feed-mobile-filter-btn" id="feed-mobile-filter-btn" onclick="openFeedFilterSheet()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+              Filter
+              <span class="feed-mobile-filter-dot" id="feed-mobile-filter-dot"></span>
+            </button>
+            <button class="feed-filter-clear-btn" id="feed-filter-clear" onclick="clearFeedFilters()" style="display:none">✕ Clear Filters</button>
+            <button class="feed-creator-toggle-btn" id="feed-creator-toggle" onclick="toggleFeedCreatorFilter()" title="Show creators only">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <span class="toggle-label" data-wide="Creators">Creators</span>
+            </button>
+          </div>
+          <!-- Mobile active filter pills row -->
+          <div class="feed-mobile-pills" id="feed-mobile-pills"></div>
+
+          <!-- Mobile feed filter bottom sheet -->
+          <div class="feed-sheet-overlay" id="feed-sheet-overlay" onclick="closeFeedFilterSheet()"></div>
+          <div class="feed-filter-sheet" id="feed-filter-sheet">
+            <div class="feed-sheet-handle"></div>
+            <div class="feed-sheet-header">
+              <span>Filter Posts</span>
+              <button class="feed-sheet-clear-all" onclick="clearFeedFilters();closeFeedFilterSheet()">Clear all</button>
+            </div>
+            <div class="feed-sheet-group">
+              <label>Subject</label>
+              <select id="feed-filter-subject-sheet" onchange="syncFeedSheetFilter('subject')">
+                <option value="">All Subjects</option>
+                <optgroup label="── Computer Science">
+                  <option>Data Structures and Algorithms</option><option>Discrete Mathematics</option>
+                  <option>Object-Oriented Programming</option><option>Database Management Systems</option>
+                  <option>Operating Systems</option><option>Computer Networks</option>
+                  <option>Software Engineering</option><option>Artificial Intelligence</option>
+                  <option>Machine Learning</option><option>Web Development</option>
+                  <option>Mobile Application Development</option><option>Cybersecurity</option>
+                  <option>Cloud Computing</option>
+                </optgroup>
+                <optgroup label="── Information Technology">
+                  <option>Information Management</option><option>Systems Analysis and Design</option>
+                  <option>Database Administration</option><option>Network Administration</option>
+                  <option>Web Systems and Technologies</option><option>Human-Computer Interaction</option>
+                  <option>IT Project Management</option><option>Information Assurance and Security</option>
+                  <option>Integrative Programming</option>
+                </optgroup>
+                <optgroup label="── Multimedia Computing">
+                  <option>Digital Arts and Design</option><option>Computer Animation</option>
+                  <option>Game Development</option><option>3D Modeling</option>
+                  <option>Video Production</option><option>Motion Graphics</option>
+                  <option>Sound Design</option><option>User Experience Design</option>
+                </optgroup>
+                <optgroup label="── Business & Accountancy">
+                  <option>Financial Accounting</option><option>Managerial Accounting</option>
+                  <option>Cost Accounting</option><option>Auditing Theory</option>
+                  <option>Taxation</option><option>Marketing Management</option>
+                  <option>Human Resource Management</option><option>Operations Management</option>
+                  <option>Financial Management</option><option>Strategic Management</option>
+                  <option>Entrepreneurship</option>
+                </optgroup>
+                <optgroup label="── Engineering">
+                  <option>Circuit Theory</option><option>Digital Electronics</option>
+                  <option>Signals and Systems</option><option>Communications Engineering</option>
+                  <option>Control Systems</option><option>Microprocessors and Microcontrollers</option>
+                  <option>Embedded Systems</option><option>Operations Research</option>
+                  <option>Quality Control</option>
+                </optgroup>
+                <optgroup label="── Health Sciences">
+                  <option>Anatomy and Physiology</option><option>Pharmacology</option>
+                  <option>Medical-Surgical Nursing</option><option>Clinical Chemistry</option>
+                  <option>Hematology</option><option>Medical Microbiology</option>
+                  <option>Pharmaceutical Chemistry</option><option>Radiographic Positioning</option>
+                </optgroup>
+                <optgroup label="── Social Sciences & Education">
+                  <option>General Psychology</option><option>Developmental Psychology</option>
+                  <option>Social Psychology</option><option>Abnormal Psychology</option>
+                  <option>Child and Adolescent Development</option><option>Curriculum Development</option>
+                  <option>Introduction to Criminology</option><option>Criminal Law</option>
+                  <option>Forensic Science</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="feed-sheet-group">
+              <label>Schedule</label>
+              <select id="feed-filter-schedule-sheet" onchange="syncFeedSheetFilter('schedule')">
+                <option value="">Any Schedule</option>
+                <option>Morning</option><option>Afternoon</option><option>Evening</option><option>Weekends</option>
+              </select>
+            </div>
+            <div class="feed-sheet-group">
+              <label>Location</label>
+              <select id="feed-filter-location-sheet" onchange="syncFeedSheetFilter('location')">
+                <option value="">Any Location</option>
+                <option>Online</option><option>Library</option><option>Campus</option><option>Café</option><option>Dormitory</option>
+              </select>
+            </div>
+            <div class="feed-sheet-footer">
+              <button class="feed-sheet-cancel" onclick="closeFeedFilterSheet()">Cancel</button>
+              <button class="feed-sheet-apply" onclick="applyFeedFilterSheet()">Apply Filters</button>
+            </div>
+          </div>
+
+          <!-- ── Feed content ── -->
+          <div class="feed-main">
+
+            <!-- Posts column (right) -->
+            <div class="feed-posts-col">
+            <!-- Create post -->
+            <div class="feed-composer">
+          <div class="composer-avatar" id="composer-avatar">A</div>
+          <div class="composer-box">
+            <textarea placeholder="What are you studying today?" id="post-input" rows="2" oninput="composerAutoGrow(this)"></textarea>
+
+            <!-- Expanded composer options (shown when textarea focused) -->
+            <div class="composer-expanded" id="composer-expanded" style="display:none">
+              <!-- Image preview strip -->
+              <div class="composer-img-preview" id="composer-img-preview"></div>
+
+              <!-- Dropdowns row -->
+              <div class="composer-dropdowns">
+                <select id="composer-subject" class="composer-select">
+                  <option value="">📚 Subject</option>
+                  <optgroup label="── Computer Science">
+                    <option>Data Structures and Algorithms</option><option>Discrete Mathematics</option>
+                    <option>Object-Oriented Programming</option><option>Database Management Systems</option>
+                    <option>Operating Systems</option><option>Computer Networks</option>
+                    <option>Software Engineering</option><option>Artificial Intelligence</option>
+                    <option>Machine Learning</option><option>Web Development</option>
+                    <option>Mobile Application Development</option><option>Cybersecurity</option>
+                    <option>Cloud Computing</option>
+                  </optgroup>
+                  <optgroup label="── Information Technology">
+                    <option>Information Management</option><option>Systems Analysis and Design</option>
+                    <option>Database Administration</option><option>Network Administration</option>
+                    <option>Web Systems and Technologies</option><option>Human-Computer Interaction</option>
+                    <option>IT Project Management</option><option>Information Assurance and Security</option>
+                    <option>Integrative Programming</option>
+                  </optgroup>
+                  <optgroup label="── Multimedia Computing">
+                    <option>Digital Arts and Design</option><option>Computer Animation</option>
+                    <option>Game Development</option><option>3D Modeling</option>
+                    <option>Video Production</option><option>Motion Graphics</option>
+                    <option>Sound Design</option><option>User Experience Design</option>
+                  </optgroup>
+                  <optgroup label="── Business & Accountancy">
+                    <option>Financial Accounting</option><option>Managerial Accounting</option>
+                    <option>Cost Accounting</option><option>Auditing Theory</option>
+                    <option>Taxation</option><option>Marketing Management</option>
+                    <option>Human Resource Management</option><option>Operations Management</option>
+                    <option>Financial Management</option><option>Strategic Management</option>
+                    <option>Entrepreneurship</option>
+                  </optgroup>
+                  <optgroup label="── Engineering">
+                    <option>Circuit Theory</option><option>Digital Electronics</option>
+                    <option>Signals and Systems</option><option>Communications Engineering</option>
+                    <option>Control Systems</option><option>Microprocessors and Microcontrollers</option>
+                    <option>Embedded Systems</option><option>Operations Research</option>
+                    <option>Quality Control</option>
+                  </optgroup>
+                  <optgroup label="── Health Sciences">
+                    <option>Anatomy and Physiology</option><option>Pharmacology</option>
+                    <option>Medical-Surgical Nursing</option><option>Clinical Chemistry</option>
+                    <option>Hematology</option><option>Medical Microbiology</option>
+                    <option>Pharmaceutical Chemistry</option><option>Radiographic Positioning</option>
+                  </optgroup>
+                  <optgroup label="── Social Sciences & Education">
+                    <option>General Psychology</option><option>Developmental Psychology</option>
+                    <option>Social Psychology</option><option>Abnormal Psychology</option>
+                    <option>Child and Adolescent Development</option><option>Curriculum Development</option>
+                    <option>Introduction to Criminology</option><option>Criminal Law</option>
+                    <option>Forensic Science</option>
+                  </optgroup>
+                </select>
+                <select id="composer-schedule" class="composer-select">
+                  <option value="">🕐 Schedule</option>
+                  <option>Morning</option>
+                  <option>Afternoon</option>
+                  <option>Evening</option>
+                  <option>Weekends</option>
+                </select>
+                <select id="composer-location" class="composer-select">
+                  <option value="">📍 Location</option>
+                  <option>Online</option>
+                  <option>Library</option>
+                  <option>Campus</option>
+                  <option>Café</option>
+                  <option>Dormitory</option>
+                </select>
+              </div>
+
+              <!-- Toolbar: emoji, image, gather buddies, share item, post -->
+              <div class="composer-toolbar">
+                <div class="composer-tools">
+                  <button class="composer-tool-btn" title="Add emoji" onclick="toggleEmojiPicker()">😊</button>
+                  <button class="composer-tool-btn" title="Add photo" onclick="document.getElementById('composer-img-input').click()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  </button>
+                  <!-- Gather Buddies toggle -->
+                  <button class="composer-tool-btn gather-buddies-btn" id="gather-buddies-btn"
+                          title="Gather Buddies — allow others to request to join your study session"
+                          onclick="toggleGatherBuddies()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span class="gather-btn-label">Gather Buddies</span>
+                  </button>
+                  <!-- Share Creator Item — visible to approved creators only (toggled by creator-feed.js) -->
+                  <button class="composer-tool-btn" id="composer-creator-btn"
+                          title="Share a product, subscription tier, or quiz to the feed"
+                          onclick="openCreatorSharePicker()"
+                          style="display:none">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                    <span class="gather-btn-label">Share Item</span>
+                  </button>
+                  <!-- Image input only (video + file inputs removed) -->
+                  <input type="file" id="composer-img-input" accept="image/*" multiple style="display:none" onchange="handleImageAttach(this)">
+                </div>
+                <button class="post-btn" onclick="submitPost()">Post</button>
+              </div>
+
+              <!-- Emoji picker (inline) -->
+              <div class="emoji-picker" id="emoji-picker" style="display:none">
+                <span onclick="insertEmoji('📚')">📚</span><span onclick="insertEmoji('🔬')">🔬</span>
+                <span onclick="insertEmoji('🧬')">🧬</span><span onclick="insertEmoji('📐')">📐</span>
+                <span onclick="insertEmoji('💻')">💻</span><span onclick="insertEmoji('🧠')">🧠</span>
+                <span onclick="insertEmoji('📝')">📝</span><span onclick="insertEmoji('⚗️')">⚗️</span>
+                <span onclick="insertEmoji('🔭')">🔭</span><span onclick="insertEmoji('📊')">📊</span>
+                <span onclick="insertEmoji('🏆')">🏆</span><span onclick="insertEmoji('🎯')">🎯</span>
+                <span onclick="insertEmoji('🤝')">🤝</span><span onclick="insertEmoji('💡')">💡</span>
+                <span onclick="insertEmoji('🚀')">🚀</span><span onclick="insertEmoji('🔥')">🔥</span>
+                <span onclick="insertEmoji('✅')">✅</span><span onclick="insertEmoji('❓')">❓</span>
+                <span onclick="insertEmoji('😊')">😊</span><span onclick="insertEmoji('👏')">👏</span>
+                <span onclick="insertEmoji('🧩')">🧩</span><span onclick="insertEmoji('📖')">📖</span>
+                <span onclick="insertEmoji('🌟')">🌟</span><span onclick="insertEmoji('💪')">💪</span>
+              </div>
+            </div>
+
+            <!-- Collapsed action row (visible before expand) -->
+            <div class="composer-actions" id="composer-actions-simple">
+              <div class="composer-tags">
+                <span class="tag-chip" onclick="expandComposer()">📚 Subject</span>
+                <span class="tag-chip" onclick="expandComposer()">🕐 Schedule</span>
+                <span class="tag-chip" onclick="expandComposer()">📍 Location</span>
+              </div>
+              <button class="post-btn" onclick="submitPost()">Post</button>
+            </div>
+          </div>
+        </div>
+
+            <div class="feed-list" id="feed-list">
+              <!-- Posts injected by JS -->
+            </div>
+            </div><!-- /feed-posts-col -->
+            <!-- Left column: filter panel + ad section -->
+            <div class="feed-left-col">
+            <aside class="feed-filter-col">
+              <div class="feed-filter-col-title">🔍 Filter Posts</div>
+              <div class="feed-search-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="feed-search-input" placeholder="Search posts…" oninput="applyFeedFilters()" autocomplete="off" />
+              </div>
+              <select id="feed-filter-subject" class="feed-topfilter-select" onchange="applyFeedFilters()">
+                <option value="">All Subjects</option>
+                <optgroup label="── Computer Science">
+                  <option>Data Structures and Algorithms</option><option>Discrete Mathematics</option>
+                  <option>Object-Oriented Programming</option><option>Database Management Systems</option>
+                  <option>Operating Systems</option><option>Computer Networks</option>
+                  <option>Software Engineering</option><option>Artificial Intelligence</option>
+                  <option>Machine Learning</option><option>Web Development</option>
+                  <option>Mobile Application Development</option><option>Cybersecurity</option>
+                  <option>Cloud Computing</option>
+                </optgroup>
+                <optgroup label="── Information Technology">
+                  <option>Information Management</option><option>Systems Analysis and Design</option>
+                  <option>Database Administration</option><option>Network Administration</option>
+                  <option>Web Systems and Technologies</option><option>Human-Computer Interaction</option>
+                  <option>IT Project Management</option><option>Information Assurance and Security</option>
+                  <option>Integrative Programming</option>
+                </optgroup>
+                <optgroup label="── Multimedia Computing">
+                  <option>Digital Arts and Design</option><option>Computer Animation</option>
+                  <option>Game Development</option><option>3D Modeling</option>
+                  <option>Video Production</option><option>Motion Graphics</option>
+                  <option>Sound Design</option><option>User Experience Design</option>
+                </optgroup>
+                <optgroup label="── Business & Accountancy">
+                  <option>Financial Accounting</option><option>Managerial Accounting</option>
+                  <option>Cost Accounting</option><option>Auditing Theory</option>
+                  <option>Taxation</option><option>Marketing Management</option>
+                  <option>Human Resource Management</option><option>Operations Management</option>
+                  <option>Financial Management</option><option>Strategic Management</option>
+                  <option>Entrepreneurship</option>
+                </optgroup>
+                <optgroup label="── Engineering">
+                  <option>Circuit Theory</option><option>Digital Electronics</option>
+                  <option>Signals and Systems</option><option>Communications Engineering</option>
+                  <option>Control Systems</option><option>Microprocessors and Microcontrollers</option>
+                  <option>Embedded Systems</option><option>Operations Research</option>
+                  <option>Quality Control</option>
+                </optgroup>
+                <optgroup label="── Health Sciences">
+                  <option>Anatomy and Physiology</option><option>Pharmacology</option>
+                  <option>Medical-Surgical Nursing</option><option>Clinical Chemistry</option>
+                  <option>Hematology</option><option>Medical Microbiology</option>
+                  <option>Pharmaceutical Chemistry</option><option>Radiographic Positioning</option>
+                </optgroup>
+                <optgroup label="── Social Sciences & Education">
+                  <option>General Psychology</option><option>Developmental Psychology</option>
+                  <option>Social Psychology</option><option>Abnormal Psychology</option>
+                  <option>Child and Adolescent Development</option><option>Curriculum Development</option>
+                  <option>Introduction to Criminology</option><option>Criminal Law</option>
+                  <option>Forensic Science</option>
+                </optgroup>
+              </select>
+              <select id="feed-filter-schedule" class="feed-topfilter-select" onchange="applyFeedFilters()">
+                <option value="">Any Schedule</option>
+                <option>Morning</option><option>Afternoon</option><option>Evening</option><option>Weekends</option>
+              </select>
+              <select id="feed-filter-location" class="feed-topfilter-select" onchange="applyFeedFilters()">
+                <option value="">Any Location</option>
+                <option>Online</option><option>Library</option><option>Campus</option><option>Café</option><option>Dormitory</option>
+              </select>
+              <button class="feed-filter-clear-btn" id="feed-filter-clear" onclick="clearFeedFilters()" style="display:none">✕ Clear Filters</button>
+              <button class="feed-creator-toggle-btn feed-creator-toggle-desktop" id="feed-creator-toggle-desktop" onclick="toggleFeedCreatorFilter()" title="Show creators only">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Creators Only
+              </button>
+            </aside>
+
+            <!-- Ad section — populated by startAdRotation() in app.js -->
+            <div id="feed-ad-section" class="feed-ad-section"></div>
+            <div id="feed-ad-section-2" class="feed-ad-section"></div>
+
+            </div><!-- /feed-left-col -->
+          </div><!-- /feed-main -->
+        </div><!-- /feed-layout -->
+      </section>
+
+      <!-- ─── FIND BUDDIES ─── -->
+      <section class="app-section" id="app-findbuddies">
+        <div class="section-header">
+          <h2>Find Study Buddies</h2>
+          <p>Discover students who share your subjects, schedule, and study style.</p>
+        </div>
+        <!-- Action row: search + filter button + my buddies toggle -->
+        <div class="buddy-action-row">
+          <div class="buddy-search-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Search by name or subject…" id="buddy-search" oninput="filterBuddies()" />
+          </div>
+
+          <!-- Filter button + desktop dropdown -->
+          <div class="buddy-filter-wrap">
+            <button class="buddy-filter-btn" id="buddy-filter-btn" onclick="toggleBuddyFilter()" aria-expanded="false" aria-controls="buddy-filter-dropdown">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+              Filter
+              <span class="buddy-filter-dot" aria-hidden="true"></span>
+            </button>
+
+            <!-- Desktop dropdown (hidden on mobile — bottom sheet used instead) -->
+            <div class="buddy-filter-dropdown" id="buddy-filter-dropdown" role="dialog" aria-label="Filter options">
+              <div class="buddy-filter-dropdown-header">
+                <span>Filters</span>
+                <button class="buddy-filter-clear-all" onclick="clearBuddyFilters()">Clear all</button>
+              </div>
+              <div class="buddy-filter-group">
+                <label for="filter-subject">Subject</label>
+                <select id="filter-subject" onchange="filterBuddies()">
+                  <option value="">All Subjects</option>
+                  <optgroup label="── Computer Science">
+                    <option>Data Structures and Algorithms</option><option>Discrete Mathematics</option>
+                    <option>Object-Oriented Programming</option><option>Database Management Systems</option>
+                    <option>Operating Systems</option><option>Computer Networks</option>
+                    <option>Software Engineering</option><option>Artificial Intelligence</option>
+                    <option>Machine Learning</option><option>Web Development</option>
+                    <option>Mobile Application Development</option><option>Cybersecurity</option>
+                    <option>Cloud Computing</option>
+                  </optgroup>
+                  <optgroup label="── Information Technology">
+                    <option>Information Management</option><option>Systems Analysis and Design</option>
+                    <option>Database Administration</option><option>Network Administration</option>
+                    <option>Web Systems and Technologies</option><option>Human-Computer Interaction</option>
+                    <option>IT Project Management</option><option>Information Assurance and Security</option>
+                    <option>Integrative Programming</option>
+                  </optgroup>
+                  <optgroup label="── Multimedia Computing">
+                    <option>Digital Arts and Design</option><option>Computer Animation</option>
+                    <option>Game Development</option><option>3D Modeling</option>
+                    <option>Video Production</option><option>Motion Graphics</option>
+                    <option>Sound Design</option><option>User Experience Design</option>
+                  </optgroup>
+                  <optgroup label="── Business &amp; Accountancy">
+                    <option>Financial Accounting</option><option>Managerial Accounting</option>
+                    <option>Cost Accounting</option><option>Auditing Theory</option>
+                    <option>Taxation</option><option>Marketing Management</option>
+                    <option>Human Resource Management</option><option>Operations Management</option>
+                    <option>Financial Management</option><option>Strategic Management</option>
+                    <option>Entrepreneurship</option>
+                  </optgroup>
+                  <optgroup label="── Engineering">
+                    <option>Circuit Theory</option><option>Digital Electronics</option>
+                    <option>Signals and Systems</option><option>Communications Engineering</option>
+                    <option>Control Systems</option><option>Microprocessors and Microcontrollers</option>
+                    <option>Embedded Systems</option><option>Operations Research</option>
+                    <option>Quality Control</option>
+                  </optgroup>
+                  <optgroup label="── Health Sciences">
+                    <option>Anatomy and Physiology</option><option>Pharmacology</option>
+                    <option>Medical-Surgical Nursing</option><option>Clinical Chemistry</option>
+                    <option>Hematology</option><option>Medical Microbiology</option>
+                    <option>Pharmaceutical Chemistry</option><option>Radiographic Positioning</option>
+                  </optgroup>
+                  <optgroup label="── Social Sciences &amp; Education">
+                    <option>General Psychology</option><option>Developmental Psychology</option>
+                    <option>Social Psychology</option><option>Abnormal Psychology</option>
+                    <option>Child and Adolescent Development</option><option>Curriculum Development</option>
+                    <option>Introduction to Criminology</option><option>Criminal Law</option>
+                    <option>Forensic Science</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div class="buddy-filter-group">
+                <label for="filter-schedule">Schedule</label>
+                <select id="filter-schedule" onchange="filterBuddies()">
+                  <option value="">Any Schedule</option>
+                  <option>Morning</option>
+                  <option>Afternoon</option>
+                  <option>Evening</option>
+                  <option>Weekends</option>
+                </select>
+              </div>
+              <div class="buddy-filter-group">
+                <label for="filter-course">Course</label>
+                <select id="filter-course" onchange="filterBuddies()">
+                  <option value="">Any Course</option>
+                  <option>BS Computer Science</option>
+                  <option>BS Information Technology</option>
+                  <option>BS Entertainment and Multimedia Computing</option>
+                  <option>BS Accountancy</option>
+                  <option>BS Accounting Information System</option>
+                  <option>BS Business Administration</option>
+                  <option>BS Hospitality Management</option>
+                  <option>BS Tourism Management</option>
+                  <option>BS Electronics Engineering</option>
+                  <option>BS Computer Engineering</option>
+                  <option>BS Industrial Engineering</option>
+                  <option>BS Nursing</option>
+                  <option>BS Radiologic Technology</option>
+                  <option>BS Medical Technology</option>
+                  <option>BS Pharmacy</option>
+                  <option>BS Education</option>
+                  <option>BS Psychology</option>
+                  <option>BS Criminology</option>
+                </select>
+              </div>
+              <div class="buddy-filter-dropdown-footer">
+                <button class="buddy-filter-cancel" onclick="closeBuddyFilter()">Cancel</button>
+                <button class="buddy-filter-apply" onclick="applyBuddyFilters()">Apply Filters</button>
+              </div>
+            </div><!-- /.buddy-filter-dropdown -->
+          </div><!-- /.buddy-filter-wrap -->
+
+          <!-- Creators-only toggle -->
+          <button class="buddy-creator-toggle-btn" id="buddy-creator-toggle" onclick="toggleBuddyCreatorFilter()" title="Show creators only">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span class="toggle-label" data-wide="Creators">Creators</span>
+          </button>
+
+          <!-- My Buddies / Discover toggle -->
+          <button class="buddy-toggle-btn" id="buddy-view-toggle" onclick="toggleBuddyView()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            My Buddies
+            <span class="count-badge" id="buddy-connected-count">0</span>
+          </button>
+        </div><!-- /.buddy-action-row -->
+
+        <!-- Active filter pills (shown when filters are applied) -->
+        <div class="buddy-active-pills" id="buddy-active-pills"></div>
+
+        <div class="buddy-grid" id="buddy-grid"><!-- injected by JS --></div>
+
+        <!-- Mobile bottom sheet overlay -->
+        <div class="buddy-sheet-overlay" id="buddy-sheet-overlay" onclick="closeBuddyFilter()"></div>
+
+        <!-- Mobile bottom sheet -->
+        <div class="buddy-filter-sheet" id="buddy-filter-sheet">
+          <div class="buddy-sheet-handle"></div>
+          <div class="buddy-sheet-header">
+            <span>Filters</span>
+            <button class="buddy-sheet-clear-all" onclick="clearBuddyFilters()">Clear all</button>
+          </div>
+          <div class="buddy-filter-group">
+            <label for="filter-subject-sheet">Subject</label>
+            <select id="filter-subject-sheet" onchange="syncSheetFilter('subject')">
+              <option value="">All Subjects</option>
+              <optgroup label="── Computer Science">
+                <option>Data Structures and Algorithms</option><option>Discrete Mathematics</option>
+                <option>Object-Oriented Programming</option><option>Database Management Systems</option>
+                <option>Operating Systems</option><option>Computer Networks</option>
+                <option>Software Engineering</option><option>Artificial Intelligence</option>
+                <option>Machine Learning</option><option>Web Development</option>
+                <option>Mobile Application Development</option><option>Cybersecurity</option>
+                <option>Cloud Computing</option>
+              </optgroup>
+              <optgroup label="── Information Technology">
+                <option>Information Management</option><option>Systems Analysis and Design</option>
+                <option>Database Administration</option><option>Network Administration</option>
+                <option>Web Systems and Technologies</option><option>Human-Computer Interaction</option>
+                <option>IT Project Management</option><option>Information Assurance and Security</option>
+                <option>Integrative Programming</option>
+              </optgroup>
+              <optgroup label="── Multimedia Computing">
+                <option>Digital Arts and Design</option><option>Computer Animation</option>
+                <option>Game Development</option><option>3D Modeling</option>
+                <option>Video Production</option><option>Motion Graphics</option>
+                <option>Sound Design</option><option>User Experience Design</option>
+              </optgroup>
+              <optgroup label="── Business &amp; Accountancy">
+                <option>Financial Accounting</option><option>Managerial Accounting</option>
+                <option>Cost Accounting</option><option>Auditing Theory</option>
+                <option>Taxation</option><option>Marketing Management</option>
+                <option>Human Resource Management</option><option>Operations Management</option>
+                <option>Financial Management</option><option>Strategic Management</option>
+                <option>Entrepreneurship</option>
+              </optgroup>
+              <optgroup label="── Engineering">
+                <option>Circuit Theory</option><option>Digital Electronics</option>
+                <option>Signals and Systems</option><option>Communications Engineering</option>
+                <option>Control Systems</option><option>Microprocessors and Microcontrollers</option>
+                <option>Embedded Systems</option><option>Operations Research</option>
+                <option>Quality Control</option>
+              </optgroup>
+              <optgroup label="── Health Sciences">
+                <option>Anatomy and Physiology</option><option>Pharmacology</option>
+                <option>Medical-Surgical Nursing</option><option>Clinical Chemistry</option>
+                <option>Hematology</option><option>Medical Microbiology</option>
+                <option>Pharmaceutical Chemistry</option><option>Radiographic Positioning</option>
+              </optgroup>
+              <optgroup label="── Social Sciences &amp; Education">
+                <option>General Psychology</option><option>Developmental Psychology</option>
+                <option>Social Psychology</option><option>Abnormal Psychology</option>
+                <option>Child and Adolescent Development</option><option>Curriculum Development</option>
+                <option>Introduction to Criminology</option><option>Criminal Law</option>
+                <option>Forensic Science</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="buddy-filter-group">
+            <label for="filter-schedule-sheet">Schedule</label>
+            <select id="filter-schedule-sheet" onchange="syncSheetFilter('schedule')">
+              <option value="">Any Schedule</option>
+              <option>Morning</option>
+              <option>Afternoon</option>
+              <option>Evening</option>
+              <option>Weekends</option>
+            </select>
+          </div>
+          <div class="buddy-filter-group">
+            <label for="filter-course-sheet">Course</label>
+            <select id="filter-course-sheet" onchange="syncSheetFilter('course')">
+              <option value="">Any Course</option>
+              <option>BS Computer Science</option>
+              <option>BS Information Technology</option>
+              <option>BS Entertainment and Multimedia Computing</option>
+              <option>BS Accountancy</option>
+              <option>BS Accounting Information System</option>
+              <option>BS Business Administration</option>
+              <option>BS Hospitality Management</option>
+              <option>BS Tourism Management</option>
+              <option>BS Electronics Engineering</option>
+              <option>BS Computer Engineering</option>
+              <option>BS Industrial Engineering</option>
+              <option>BS Nursing</option>
+              <option>BS Radiologic Technology</option>
+              <option>BS Medical Technology</option>
+              <option>BS Pharmacy</option>
+              <option>BS Education</option>
+              <option>BS Psychology</option>
+              <option>BS Criminology</option>
+            </select>
+          </div>
+          <div class="buddy-sheet-footer">
+            <button class="buddy-filter-cancel" onclick="closeBuddyFilter()">Cancel</button>
+            <button class="buddy-filter-apply" onclick="applyBuddyFilters()">Apply Filters</button>
+          </div>
+        </div><!-- /.buddy-filter-sheet -->
+      </section>
+
+      <!-- ─── MY MATCHES ─── -->
+      <section class="app-section" id="app-mymatches">
+        <div class="section-header">
+          <h2>My Matches</h2>
+          <p>Manage your study buddy requests and connections.</p>
+        </div>
+        <div class="matches-tabs">
+          <button class="match-tab active" id="tab-received" onclick="switchMatchTab('received')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Received Requests <span class="tab-count">3</span>
+          </button>
+          <button class="match-tab" id="tab-sent" onclick="switchMatchTab('sent')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Sent Requests <span class="tab-count">4</span>
+          </button>
+        </div>
+        <div id="matches-received" class="matches-list"><!-- injected --></div>
+        <div id="matches-sent" class="matches-list" style="display:none"><!-- injected --></div>
+      </section>
+
+      <!-- ─── MESSAGES ─── -->
+      <section class="app-section" id="app-messages">
+        <div class="messages-layout">
+
+          <!-- LEFT: Conversation list -->
+          <div class="conv-sidebar">
+            <div class="conv-sidebar-header">
+              <h2 class="conv-sidebar-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Messages
+              </h2>
+              <div class="conv-sidebar-actions">
+                <button class="compose-btn" onclick="openComposeModal()" title="New Message or Group">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="conv-search-wrap">
+              <svg class="conv-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input class="conv-search-input" id="conv-search-input" type="text"
+                placeholder="Search conversations…"
+                oninput="filterConversations(this.value)" />
+            </div>
+            <div class="conv-list" id="conv-list-items">
+              <!-- Injected by renderConvList() -->
+            </div>
+          </div>
+
+          <!-- RIGHT: Chat panel -->
+          <div class="chat-panel" id="chat-panel">
+
+            <!-- Empty state -->
+            <div class="chat-empty" id="chat-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <h3>Select a conversation</h3>
+              <p>Choose a conversation from the left to start chatting with your study buddy.</p>
+            </div>
+
+            <!-- Active chat -->
+            <div class="chat-active" id="chat-active" style="display:none">
+
+              <!-- Chat header -->
+              <div class="chat-header" id="chat-header">
+                <!-- Phase 4: Back button for mobile -->
+                <button class="chat-header-back-btn" title="Back to conversations">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                  </svg>
+                </button>
+                
+                <div class="chat-header-avatar" id="chat-header-avatar">?</div>
+                <div class="chat-header-info">
+                  <div class="chat-header-name" id="chat-header-name">—</div>
+                  <div class="chat-header-status" id="chat-header-status">Study Buddy</div>
+                </div>
+                <div class="chat-header-actions">
+                  <button class="chat-header-profile-btn" id="chat-profile-btn" onclick="openChatUserProfile(activeChatEmail)" title="View profile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </button>
+                  <button class="chat-header-settings-btn" id="chat-settings-btn" onclick="toggleGroupSettings()" title="Group settings" style="display:none">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Group settings panel (slides in below header) -->
+              <div class="group-settings-panel" id="group-settings-panel" style="display:none">
+
+                <!-- Group Name -->
+                <div class="group-settings-section" id="gs-rename-section">
+                  <label class="group-settings-label">Group Name</label>
+                  <div class="group-settings-rename-row">
+                    <input type="text" id="group-rename-input" class="group-rename-input" placeholder="Enter group name…" maxlength="40" />
+                    <button class="group-rename-btn" onclick="renameGroupChat()">Save</button>
+                  </div>
+                </div>
+
+                <!-- Members list -->
+                <div class="group-settings-section">
+                  <label class="group-settings-label">Members</label>
+                  <div class="group-members-list" id="group-members-list">
+                    <!-- Injected by _renderGroupSettingsPanel() -->
+                  </div>
+                </div>
+
+                <!-- Add Member (host & managers only — hidden for members) -->
+                <div class="group-settings-section" id="gs-add-section" style="display:none">
+                  <label class="group-settings-label">Add Member</label>
+                  <div class="gs-add-search-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="gs-add-search" class="gs-add-search-input" placeholder="Search connected buddies…" oninput="_renderAddMemberList(null, null, this.value)" />
+                  </div>
+                  <div class="gs-add-list" id="gs-add-list">
+                    <!-- Injected by _renderGroupSettingsPanel() -->
+                  </div>
+                </div>
+
+                <!-- Danger zone — Delete group (host only) -->
+                <div class="group-settings-section gs-danger-section" id="gs-destroy-section" style="display:none">
+                  <label class="group-settings-label" style="color:#ef4444">Danger Zone</label>
+                  <button class="gs-destroy-btn" onclick="destroyGroupChat()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    Delete Group Chat
+                  </button>
+                </div>
+
+              </div>
+
+              <!-- Messages area -->
+              <div class="chat-messages" id="chat-messages">
+                <!-- Injected by renderChatMessages() -->
+              </div>
+
+              <!-- Input area -->
+              <div class="chat-input-area">
+                <textarea class="chat-input" id="chat-input" rows="1"
+                  placeholder="Type a message…"
+                  onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"
+                  oninput="_onChatInputChange(this)"></textarea>
+                <button class="chat-send-btn" onclick="sendChatMessage()" title="Send">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+              </div>
+
+            </div><!-- /chat-active -->
+          </div><!-- /chat-panel -->
+        </div><!-- /messages-layout -->
+      </section>
+
+      <!-- ─── MY PROFILE ─── -->
+      <!-- ─── SESSIONS ─── -->
+      <section class="app-section" id="app-sessions">
+        <div class="sr-layout">
+
+          <!-- ── SIDEBAR ──────────────────────────────────────── -->
+          <aside class="sr-sidebar">
+            <div class="sr-sidebar-top">
+              <div class="sr-sidebar-brand">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                Sessions
+                <span class="sr-live-dot" id="sessions-live-badge" style="display:none"></span>
+              </div>
+              <button class="sr-create-btn" onclick="openCreateRoomModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Room
+              </button>
+            </div>
+            <div class="sr-rooms-list" id="rooms-list"></div>
+          </aside>
+
+          <!-- ── MAIN ─────────────────────────────────────────── -->
+          <div class="sr-main" id="sessions-main">
+
+            <!-- LOBBY -->
+            <div class="sr-lobby" id="sessions-lobby">
+              <div class="sr-lobby-art">
+                <svg viewBox="0 0 160 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="20" y="30" width="55" height="40" rx="8" fill="var(--accent)" stroke="var(--border-panel)" stroke-width="1.5"/>
+                  <rect x="85" y="30" width="55" height="40" rx="8" fill="var(--accent)" stroke="var(--border-panel)" stroke-width="1.5"/>
+                  <rect x="20" y="80" width="55" height="40" rx="8" fill="var(--accent)" stroke="var(--border-panel)" stroke-width="1.5"/>
+                  <rect x="85" y="80" width="55" height="40" rx="8" fill="var(--accent)" stroke="var(--border-panel)" stroke-width="1.5"/>
+                  <circle cx="47" cy="50" r="10" fill="var(--brand-base)" opacity=".25"/>
+                  <circle cx="112" cy="50" r="10" fill="var(--brand-base)" opacity=".15"/>
+                  <circle cx="47" cy="100" r="10" fill="var(--brand-base)" opacity=".15"/>
+                  <circle cx="112" cy="100" r="10" fill="var(--brand-base)" opacity=".35"/>
+                  <circle cx="80" cy="70" r="16" fill="var(--brand-base)"/>
+                  <line x1="80" y1="62" x2="80" y2="78" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                  <line x1="72" y1="70" x2="88" y2="70" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <h3 class="sr-lobby-title">No room selected</h3>
+              <p class="sr-lobby-sub">Join a room from the sidebar or create your own to start a live study session.</p>
+              <button class="sr-create-btn" style="margin-top:4px" onclick="openCreateRoomModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create a Room
+              </button>
+            </div>
+
+            <!-- ACTIVE ROOM -->
+            <div class="sr-room" id="room-view" style="display:none">
+
+              <!-- Room chrome -->
+              <div class="sr-room-header">
+                <!-- Mobile back button — returns to lobby without leaving the room -->
+                <button class="sr-mobile-back" onclick="mobileBackToLobby()" title="Back to rooms">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  Rooms
+                </button>
+
+                <div class="sr-room-info">
+                  <span class="sr-room-live-dot" id="room-indicator"></span>
+                  <div>
+                    <div class="sr-room-name" id="room-header-name">Room</div>
+                    <div class="sr-room-subject" id="room-header-subject"></div>
+                  </div>
+                </div>
+
+                <!-- Pomodoro removed from header — now lives in the Timer tab -->
+
+                <button class="sr-lock-btn" id="btn-room-lock" onclick="toggleLockPopover()" title="Lock room" style="display:none">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </button>
+                <div id="lock-popover" style="display:none"></div>
+
+                <button class="sr-leave-btn" onclick="leaveRoom()" title="Leave room">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Leave
+                </button>
+              </div>
+
+              <!-- Pill tab bar -->
+              <div class="sr-tab-bar">
+                <button class="sr-tab active" id="rtab-video" onclick="switchRoomTab('video')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                  Video
+                </button>
+                <button class="sr-tab" id="rtab-whiteboard" onclick="switchRoomTab('whiteboard')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                  Whiteboard
+                </button>
+                <button class="sr-tab" id="rtab-chat" onclick="switchRoomTab('chat')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  Chat
+                  <span class="sr-chat-badge" id="room-chat-badge" style="display:none"></span>
+                </button>
+                <button class="sr-tab" id="rtab-timer" onclick="switchRoomTab('timer')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Timer
+                </button>
+              </div>
+
+              <!-- Panels -->
+              <div class="sr-workspace">
+
+                <!-- VIDEO -->
+                <div class="sr-panel active" id="rpanel-video">
+                  <div class="sr-video-grid" id="video-grid"></div>
+                  <div id="sr-host-only-bar" class="sr-host-only-bar" style="display:none">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    Highlight controls are only available to the room host
+                  </div>
+
+                  <div class="sr-media-bar" style="position:relative">
+
+                    <!-- ── Invite panel — pops up above the media bar ── -->
+                    <div class="sr-invite-panel" id="sr-invite-panel" style="display:none">
+                      <div class="sr-invite-header">
+                        <div class="sr-invite-title">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                          Invite a buddy
+                        </div>
+                        <button class="sr-invite-close" onclick="closeInvitePanel()" title="Close">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                      </div>
+                      <div class="sr-invite-search">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input id="pp-buddy-search" type="text" placeholder="Search connected buddies…" oninput="filterInviteBuddies()" autocomplete="off" />
+                      </div>
+                      <div class="sr-pp-buddy-list" id="pp-buddy-list"></div>
+                    </div>
+                    <button class="sr-media-btn" id="btn-toggle-mic" onclick="toggleMic()" title="Toggle Mic">
+                      <svg class="mic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                      <svg class="mic-off" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                      <span id="mic-label">Mute</span>
+                    </button>
+                    <button class="sr-media-btn" id="btn-toggle-cam" onclick="toggleCam()" title="Toggle Camera">
+                      <svg class="cam-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                      <svg class="cam-off" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34m-7.72-2.06A4 4 0 1 1 7.56 7.56"/></svg>
+                      <span id="cam-label">Stop Video</span>
+                    </button>
+                    <button class="sr-media-btn" id="btn-toggle-screen" onclick="toggleScreenShare()" title="Share Screen">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                      <span id="screen-label">Share Screen</span>
+                    </button>
+                    <button class="sr-media-btn" id="btn-highlight" onclick="toggleHighlightPicker()" title="Highlight a participant" style="display:none">
+                      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      <span id="highlight-label">Highlight</span>
+                    </button>
+                    <button class="sr-media-btn" id="btn-invite" onclick="toggleInvitePanel()" title="Invite a buddy">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+                      <span>Invite</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- WHITEBOARD -->
+                <div class="sr-panel" id="rpanel-whiteboard" style="display:none">
+                  <div class="rwb-access-bar" id="rwb-access-bar" style="display:none">
+                    <div class="rwb-access-left">
+                      <span class="rwb-host-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        Host
+                      </span>
+                      <span class="rwb-access-hint">Grant draw access:</span>
+                    </div>
+                    <div class="rwb-participant-toggles" id="rwb-participant-toggles"></div>
+                    <div class="rwb-access-right">
+                      <button class="rwb-sync-btn" onclick="saveRoomWbCanvas()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="4" x2="21" y2="10"/></svg>
+                        Push Canvas
+                      </button>
+                    </div>
+                  </div>
+                  <div class="rwb-status-bar" id="rwb-status-bar" style="display:none">
+                    <span id="rwb-access-badge" class="rwb-readonly-badge">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      View only
+                    </span>
+                    <button class="rwb-sync-btn" onclick="loadRoomWbCanvas()">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                      Refresh
+                    </button>
+                  </div>
+                  <div id="rwb-whiteboard-host" class="rwb-wb-host"></div>
+                </div>
+
+                <!-- CHAT -->
+                <div class="sr-panel" id="rpanel-chat" style="display:none">
+                  <div class="rchat-msgs" id="rchat-msgs"></div>
+                  <div class="rchat-input-row">
+                    <input type="text" id="rchat-input" class="rchat-input"
+                      placeholder="Message the room…"
+                      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendRoomMessage();}"
+                      autocomplete="off" />
+                    <button class="rchat-send" onclick="sendRoomMessage()">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- TIMER -->
+                <div class="sr-panel" id="rpanel-timer" style="display:none">
+                  <div class="sr-pomo-panel">
+                    <div class="sr-pomo-modes">
+                      <button class="sr-pomo-mode on" id="pomo-mode-focus" onclick="switchPomoMode(this,'focus',25)">Focus</button>
+                      <button class="sr-pomo-mode" id="pomo-mode-short" onclick="switchPomoMode(this,'short',5)">Short Break</button>
+                      <button class="sr-pomo-mode" id="pomo-mode-long" onclick="switchPomoMode(this,'long',15)">Long Break</button>
+                    </div>
+                    <div class="sr-pomo-badge" id="pomo-badge">🍅 Focus</div>
+                    <div class="sr-pomo-time" id="pomo-time">25:00</div>
+                    <div class="sr-pomo-rounds" id="pomo-rounds">0/4</div>
+                    <div class="sr-pomo-btns">
+                      <button class="sr-pomo-btn" onclick="pomodoroReset()" title="Reset">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3"/></svg>
+                      </button>
+                      <button class="sr-pomo-btn sr-pomo-play" id="pomo-play" onclick="pomodoroToggle()" title="Start / Pause">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      </button>
+                      <button class="sr-pomo-btn" onclick="pomodoroSkip()" title="Skip">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /sr-workspace -->
+            </div><!-- /sr-room -->
+          </div><!-- /sr-main -->
+        </div><!-- /sr-layout -->
+      </section>
+
+      <!-- ─── NOTES ─── -->
+
+      <!-- ─── NOTES ─── -->
+
+
+      <!-- ─── CREATOR HUB ─── -->
+      <section class="app-section" id="app-creator">
+
+        <!-- ══ NOT YET APPLIED — Application screen ══ -->
+        <div id="creator-apply-screen" style="display:none">
+          <div class="creator-apply-hero">
+            <div class="creator-apply-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <h2>Become a Study Buddy Creator</h2>
+            <p>Share your knowledge, build a following, and earn from your content. Creators can publish paid study materials, build subscription communities, and create interactive quizzes.</p>
+            <div class="creator-perks">
+              <div class="creator-perk"><span class="perk-icon">💰</span><div><strong>Monetize your content</strong><p>Set paywalls on premium notes, study guides, and resources.</p></div></div>
+              <div class="creator-perk"><span class="perk-icon">🔔</span><div><strong>Subscription tiers</strong><p>Build a recurring community — students subscribe for ongoing access.</p></div></div>
+              <div class="creator-perk"><span class="perk-icon">🧠</span><div><strong>Quiz Maker</strong><p>Create interactive quizzes and assessments for your audience.</p></div></div>
+              <div class="creator-perk"><span class="perk-icon">📊</span><div><strong>Analytics dashboard</strong><p>Track your revenue, subscribers, and quiz performance.</p></div></div>
+            </div>
+            <button class="creator-apply-btn" onclick="openCreatorApplication()">Apply to Become a Creator →</button>
+          </div>
+        </div>
+
+        <!-- ══ APPLICATION FORM ══ -->
+        <div id="creator-form-screen" style="display:none">
+          <div class="creator-form-wrap">
+            <div class="creator-form-card">
+              <button class="creator-back-btn" onclick="showCreatorApplyHero()">← Back</button>
+              <h3>Creator Application</h3>
+              <p class="creator-form-sub">Tell us about yourself and what you plan to create.</p>
+              <div class="creator-field"><label>Creator Name / Brand</label><input type="text" id="ca-brand" placeholder="e.g. Alex's CS Notes" /></div>
+              <div class="creator-field"><label>Bio / About your content</label><textarea id="ca-bio" rows="4" placeholder="What subjects do you teach? Who is your target audience?"></textarea></div>
+              <div class="creator-field"><label>Primary Subject Area</label>
+                <select id="ca-subject">
+                  <option value="">Select a subject…</option>
+                  <option>Computer Science</option><option>Mathematics</option><option>Physics</option>
+                  <option>Biology</option><option>Chemistry</option><option>Business</option>
+                  <option>Engineering</option><option>Literature</option><option>History</option><option>Other</option>
+                </select>
+              </div>
+              <div class="creator-field"><label>Content types you plan to create</label>
+                <div class="creator-checkbox-group">
+                  <label class="creator-checkbox"><input type="checkbox" value="notes" /> Study Notes &amp; Guides</label>
+                  <label class="creator-checkbox"><input type="checkbox" value="quizzes" /> Quizzes &amp; Practice Tests</label>
+                  <label class="creator-checkbox"><input type="checkbox" value="subscriptions" /> Subscription Community</label>
+                  <label class="creator-checkbox"><input type="checkbox" value="resources" /> Curated Resources</label>
+                </div>
+              </div>
+              <div class="creator-field"><label>Planned subscription price (₱/month, optional)</label><input type="number" id="ca-price" placeholder="e.g. 99" min="0" /></div>
+              <div id="creator-apply-error" class="login-error" style="display:none"></div>
+              <button class="creator-apply-btn" onclick="submitCreatorApplication()">Submit Application</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ PENDING APPROVAL ══ -->
+        <div id="creator-pending-screen" style="display:none">
+          <div class="creator-apply-hero">
+            <div class="creator-apply-icon" style="color:var(--brand-accent)">⏳</div>
+            <h2>Application Under Review</h2>
+            <p>We've received your creator application! Our team will review it within 1–3 business days. You'll be notified once approved.</p>
+            <div class="creator-pending-info" id="creator-pending-info"></div>
+          </div>
+        </div>
+
+        <!-- ══ CREATOR DASHBOARD ══ -->
+        <div id="creator-dashboard" style="display:none">
+
+          <!-- Lively header with accent bar -->
+          <div class="creator-dash-header">
+            <!-- Row 1: brand + small stats -->
+            <div class="creator-dash-top">
+              <div class="creator-dash-brand">
+                <div class="creator-dash-badge">
+                  <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  Creator
+                </div>
+                <h2 id="creator-dash-name">Creator Hub</h2>
+                <p id="creator-dash-subject" class="creator-dash-sub"></p>
+              </div>
+              <div class="creator-dash-stats">
+                <div class="creator-stat">
+                  <div class="creator-stat-val" id="cstat-subs">0</div>
+                  <div class="creator-stat-lbl">Subscribers</div>
+                </div>
+                <div class="creator-stat">
+                  <div class="creator-stat-val" id="cstat-products">0</div>
+                  <div class="creator-stat-lbl">Products</div>
+                </div>
+                <div class="creator-stat">
+                  <div class="creator-stat-val" id="cstat-quizzes">0</div>
+                  <div class="creator-stat-lbl">Quizzes</div>
+                </div>
+                <div class="creator-stat">
+                  <div class="creator-stat-val" id="cstat-purchases">0</div>
+                  <div class="creator-stat-lbl">Sales</div>
+                </div>
+              </div>
+            </div>
+            <!-- Row 2: total money + withdraw (always full-width on mobile) -->
+            <div class="creator-dash-money-row">
+              <div class="creator-dash-money-info">
+                <div class="creator-dash-money-val" id="cstat-total-money">₱0</div>
+                <div class="creator-dash-money-lbl">Total Money</div>
+              </div>
+              <button class="creator-withdraw-btn" onclick="openWithdrawModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Withdraw
+              </button>
+            </div>
+          </div>
+
+          <!-- Wrap tabs + panels together for clean border -->
+          <div class="creator-dashboard-wrap">
+
+            <!-- Dashboard tabs -->
+            <div class="creator-tabs">
+              <button class="creator-tab active" id="ctab-products" onclick="switchCreatorTab('products')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                Products
+              </button>
+              <button class="creator-tab" id="ctab-subscriptions" onclick="switchCreatorTab('subscriptions')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Subscriptions
+              </button>
+              <button class="creator-tab" id="ctab-quizzes" onclick="switchCreatorTab('quizzes')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Quiz Maker
+              </button>
+              <button class="creator-tab" id="ctab-analytics" onclick="switchCreatorTab('analytics')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Analytics
+              </button>
+            </div>
+
+            <!-- ─── PRODUCTS tab ─── -->
+            <div class="creator-tab-content" id="ctabpanel-products" style="display:none">
+              <div style="padding:24px" id="creator-products-wrap">
+                <div class="creator-panel-header">
+                  <h3>My Products</h3>
+                  <button class="creator-action-btn" onclick="openProductModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Product
+                  </button>
+                </div>
+                <!-- Type filter icon cards -->
+                <div class="cp-type-filter-row" id="cp-type-filter-row"><!-- injected by loadCreatorProducts --></div>
+                <div class="creator-products-grid" id="creator-products-grid"><!-- injected --></div>
+              </div>
+            </div>
+
+            <!-- ─── SUBSCRIPTIONS tab ─── -->
+            <div class="creator-tab-content" id="ctabpanel-subscriptions" style="display:none">
+              <div style="padding:24px">
+                <div class="creator-panel-header">
+                  <h3>My Subscription</h3>
+                </div>
+                <p class="creator-panel-hint">Set up one subscription plan that students can subscribe to for recurring access to your content.</p>
+                <div class="creator-subs-grid" id="creator-subs-grid"><!-- injected --></div>
+                <div class="creator-panel-header" style="margin-top:28px"><h3>Subscribers</h3></div>
+                <div class="creator-subscribers-list" id="creator-subscribers-list"><!-- injected --></div>
+              </div>
+            </div>
+
+            <!-- ─── QUIZ MAKER tab ─── -->
+            <div class="creator-tab-content" id="ctabpanel-quizzes" style="display:none">
+              <div style="padding:24px">
+                <div class="creator-panel-header">
+                  <h3>Quiz Maker</h3>
+                  <button class="creator-action-btn" onclick="openQuizBuilder()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Quiz
+                  </button>
+                </div>
+                <!-- Quiz builder -->
+                <div class="quiz-builder" id="quiz-builder" style="display:none">
+                  <div class="quiz-builder-header">
+                    <input type="text" id="qb-title" class="quiz-builder-title" placeholder="Quiz title…" />
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                      <select id="qb-subject" class="creator-select"><option value="">Subject…</option><option>Computer Science</option><option>Mathematics</option><option>Physics</option><option>Biology</option><option>Chemistry</option><option>Business</option><option>Other</option></select>
+                      <select id="qb-access" class="creator-select" onchange="toggleQuizPriceInput(this.value)">
+                        <option value="free">🌐 Free</option>
+                        <option value="subscription">🔒 Subscribers Only</option>
+                        <option value="priced">💰 Fixed Price</option>
+                      </select>
+                      <div id="qb-price-wrap" style="display:none;align-items:center;gap:6px;">
+                        <span style="font-size:.85rem;font-weight:600;color:var(--brand-mid);">₱</span>
+                        <input type="number" id="qb-price" class="creator-select" min="1" step="1" placeholder="0" style="width:90px;" />
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Question type selector -->
+                  <div class="qb-type-row">
+                    <span class="qb-type-label">Add question:</span>
+                    <button class="qb-type-chip qb-type-chip--mc active" onclick="addQuizQuestion('multiple_choice')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><polyline points="9 11 12 14 22 4"/></svg>
+                      Multiple choice
+                    </button>
+                    <button class="qb-type-chip qb-type-chip--tf" onclick="addQuizQuestion('true_false')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                      True / False
+                    </button>
+                    <button class="qb-type-chip qb-type-chip--fitb" onclick="addQuizQuestion('fill_blank')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+                      Fill in the blank
+                    </button>
+                    <button class="qb-type-chip qb-type-chip--ord" onclick="addQuizQuestion('ordering')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                      Ordering
+                    </button>
+                    <button class="qb-type-chip qb-type-chip--img" onclick="addQuizQuestion('image_based')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      Image-based
+                    </button>
+                    <div class="qb-type-divider"></div>
+                    <button class="qb-type-chip qb-type-chip--import" onclick="openQuizImporter()">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      Import Questions
+                    </button>
+                    <div class="qb-type-divider"></div>
+                    <div class="qb-inline-save" id="qb-inline-save" style="display:none">
+                      <button class="rnote-btn secondary qb-inline-btn" onclick="closeQuizBuilder()">Cancel</button>
+                      <button class="rnote-btn qb-inline-btn" onclick="saveQuiz()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+                        Save Quiz
+                      </button>
+                    </div>
+                  </div>
+                  <div class="quiz-questions-list" id="quiz-questions-list"><!-- questions injected by JS --></div>
+                  <div class="qb-footer-actions">
+                    <button class="rnote-btn secondary" onclick="closeQuizBuilder()">Cancel</button>
+                    <button class="rnote-btn" onclick="saveQuiz()">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                      Save Quiz
+                    </button>
+                  </div>
+                </div>
+                <div class="creator-quizzes-list" id="creator-quizzes-list"><!-- injected --></div>
+              </div>
+            </div>
+
+            <!-- ─── ANALYTICS tab ─── -->
+            <div class="creator-tab-content" id="ctabpanel-analytics" style="display:none">
+              <div style="padding:24px">
+                <div class="creator-panel-header"><h3>Analytics Overview</h3></div>
+                <div class="creator-analytics-grid" id="creator-analytics-grid"><!-- injected --></div>
+                <div class="an-detail-panel" id="creator-analytics-detail" style="display:none">
+                  <div class="an-detail-inner" id="creator-analytics-detail-inner"></div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /creator-dashboard-wrap -->
+        </div><!-- /creator-dashboard -->
+      </section><!-- /app-creator -->
+
+      <!-- ═══════════════════════════════════════
+           NOTEPAD
+      ════════════════════════════════════════ -->
+      <section class="app-section" id="app-notepad">
+        <div class="np-layout">
+
+          <!-- ── LEFT: folder + file tree ─────────────────────── -->
+          <aside class="np-sidebar">
+            <div class="np-sidebar-header">
+              <div class="np-sidebar-brand">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                <span>My Notepad</span>
+              </div>
+              <div class="np-sidebar-actions">
+                <button class="np-hdr-btn" onclick="openNewFolderModal()" title="New folder">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+                  Folder
+                </button>
+                <button class="np-hdr-btn primary" onclick="createNotepadNote(null)" title="New note (Ctrl+N)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  New Note
+                </button>
+              </div>
+            </div>
+
+            <div class="np-search-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="np-search" placeholder="Search notes…" oninput="filterNotepadTree()" />
+              <button class="np-search-clear" id="np-search-clear" onclick="clearNpSearch()" title="Clear" style="display:none">✕</button>
+            </div>
+
+            <div class="np-stats-bar">
+              <span id="np-total-count">0 notes</span>
+              <span class="np-stats-dot">·</span>
+              <span id="np-folder-count">0 folders</span>
+            </div>
+
+            <div class="np-tree" id="np-tree">
+              <div class="np-tree-empty">Loading…</div>
+            </div>
+          </aside>
+
+          <!-- ── RIGHT: note viewer / editor ──────────────────── -->
+          <div class="np-viewer" id="np-viewer">
+
+            <!-- Empty state -->
+            <div class="np-viewer-empty" id="np-viewer-empty">
+              <div class="np-empty-art">
+                <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="20" y="15" width="65" height="82" rx="6" fill="var(--accent)" stroke="var(--border-panel)" stroke-width="2"/>
+                  <rect x="30" y="25" width="45" height="82" rx="6" fill="var(--bg-card)" stroke="var(--border-panel)" stroke-width="2"/>
+                  <line x1="40" y1="45" x2="65" y2="45" stroke="var(--brand-base)" stroke-width="2.5" stroke-linecap="round"/>
+                  <line x1="40" y1="55" x2="70" y2="55" stroke="var(--border-panel)" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="40" y1="63" x2="68" y2="63" stroke="var(--border-panel)" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="40" y1="71" x2="60" y2="71" stroke="var(--border-panel)" stroke-width="2" stroke-linecap="round"/>
+                  <circle cx="88" cy="88" r="18" fill="var(--brand-base)"/>
+                  <line x1="88" y1="80" x2="88" y2="96" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                  <line x1="80" y1="88" x2="96" y2="88" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <h3 class="np-empty-title">Nothing selected</h3>
+              <p class="np-empty-sub">Pick a note from the sidebar or create a new one to get started.</p>
+              <button class="np-hdr-btn primary" style="margin-top:8px" onclick="createNotepadNote(null)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Note
+              </button>
+            </div>
+
+            <!-- Note content -->
+            <div class="np-note-wrap" id="np-note-wrap" style="display:none">
+
+              <!-- Title bar -->
+              <div class="np-note-titlebar">
+                <!-- Mobile top row: back · title · save -->
+                <div class="np-mobile-topbar">
+                  <button class="np-back-btn" onclick="npGoBack()" title="Back to notes">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    Notes
+                  </button>
+                  <input class="np-note-title np-mobile-title" id="np-note-title" placeholder="Untitled Note" oninput="onNotepadTitleInput()" />
+                  <div class="np-mobile-topbar-actions">
+                    <button class="np-mobile-action-btn np-mobile-save-btn" onclick="saveNotepadNote()" title="Save (Ctrl+S)">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    </button>
+                    <div class="np-download-wrap np-mobile-dl-wrap">
+                      <button class="np-mobile-action-btn" onclick="toggleNpDownloadMenu(event)" title="Download" aria-expanded="false">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      </button>
+                      <div class="np-download-menu" id="np-download-menu-mobile" aria-hidden="true">
+                        <div class="np-dm-header">Export as</div>
+                        <button class="np-dm-item" onclick="downloadNote('pdf')">
+                          <span class="np-dm-icon np-dm-pdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+                          <span class="np-dm-text"><span class="np-dm-label">PDF</span><span class="np-dm-sub">Print-ready</span></span>
+                        </button>
+                        <button class="np-dm-item" onclick="downloadNote('md')">
+                          <span class="np-dm-icon np-dm-md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+                          <span class="np-dm-text"><span class="np-dm-label">Markdown</span><span class="np-dm-sub">.md file</span></span>
+                        </button>
+                        <button class="np-dm-item" onclick="downloadNote('txt')">
+                          <span class="np-dm-icon np-dm-txt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+                          <span class="np-dm-text"><span class="np-dm-label">Plain text</span><span class="np-dm-sub">.txt file</span></span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Desktop title row -->
+                <div class="np-title-row np-desktop-title-row">
+                  <span class="np-note-color-bar" id="np-note-color-bar"></span>
+                  <input class="np-note-title" id="np-note-title-desktop" placeholder="Untitled Note" oninput="onNotepadTitleInput()" />
+                </div>
+                <div class="np-meta-row">
+                  <div class="np-note-subject-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    <input class="np-subject-input" id="np-subject-input" placeholder="Subject…" oninput="onNotepadTitleInput()" />
+                  </div>
+                  <div class="np-note-meta" id="np-note-meta"></div>
+                  <div class="np-autosave-indicator" id="np-autosave-indicator">
+                    <span class="np-autosave-dot"></span>
+                    <span id="np-autosave-text">Saved</span>
+                  </div>
+                </div>
+                <div class="np-note-header-actions">
+                  <button class="np-icon-btn" id="np-pin-btn" onclick="toggleNotepadPin()" title="Pin note">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  </button>
+                  <button class="np-icon-btn" onclick="saveNotepadNote()" title="Save (Ctrl+S)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Save
+                  </button>
+                  <div class="np-download-wrap">
+                    <button class="np-download-btn" onclick="toggleNpDownloadMenu(event)" aria-expanded="false" title="Download note">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      <span class="np-download-label">Download</span>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="np-download-menu" id="np-download-menu" aria-hidden="true">
+                      <div class="np-dm-header">Export note as</div>
+                      <button class="np-dm-item" onclick="downloadNote('pdf')">
+                        <span class="np-dm-icon np-dm-pdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+                        <span class="np-dm-text"><span class="np-dm-label">PDF</span><span class="np-dm-sub">Print-ready document</span></span>
+                        <span class="np-dm-badge">Recommended</span>
+                      </button>
+                      <div class="np-dm-sep"></div>
+                      <button class="np-dm-item" onclick="downloadNote('md')">
+                        <span class="np-dm-icon np-dm-md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+                        <span class="np-dm-text"><span class="np-dm-label">Markdown</span><span class="np-dm-sub">Portable .md file</span></span>
+                      </button>
+                      <button class="np-dm-item" onclick="downloadNote('txt')">
+                        <span class="np-dm-icon np-dm-txt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+                        <span class="np-dm-text"><span class="np-dm-label">Plain text</span><span class="np-dm-sub">Simple .txt file</span></span>
+                      </button>
+                    </div>
+                  </div>
+                  <button class="np-icon-btn danger" onclick="deleteNotepadNote()" title="Delete note">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tab bar: Write / Whiteboard -->
+              <div class="np-tab-bar">
+                <button class="np-tab active" id="nptab-write" onclick="switchNotepadTab('write')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                  Write
+                </button>
+                <button class="np-tab" id="nptab-whiteboard" onclick="switchNotepadTab('whiteboard')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                  Whiteboard
+                </button>
+              </div>
+
+              <!-- Write panel -->
+              <div class="np-panel" id="np-panel-write">
+                <div class="np-editor-toolbar">
+                  <button class="np-tb-btn" onclick="document.execCommand('bold')" title="Bold (Ctrl+B)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+                  </button>
+                  <button class="np-tb-btn" onclick="document.execCommand('italic')" title="Italic (Ctrl+I)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+                  </button>
+                  <button class="np-tb-btn" onclick="document.execCommand('underline')" title="Underline (Ctrl+U)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
+                  </button>
+                  <button class="np-tb-btn" onclick="document.execCommand('strikeThrough')" title="Strikethrough">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><path d="M16 6C16 6 14.5 4 12 4s-5 1.5-5 4c0 4 5 4 5 4"/><path d="M8 18c0 0 1.5 2 4 2s5-1.5 5-4"/></svg>
+                  </button>
+                  <span class="np-tb-divider"></span>
+                  <button class="np-tb-btn" onclick="document.execCommand('formatBlock',false,'h2')" title="Heading 2">H2</button>
+                  <button class="np-tb-btn" onclick="document.execCommand('formatBlock',false,'h3')" title="Heading 3">H3</button>
+                  <button class="np-tb-btn" onclick="document.execCommand('formatBlock',false,'p')"  title="Paragraph">¶</button>
+                  <span class="np-tb-divider"></span>
+                  <button class="np-tb-btn" onclick="document.execCommand('insertUnorderedList')" title="Bullet list">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>
+                  </button>
+                  <button class="np-tb-btn" onclick="document.execCommand('insertOrderedList')" title="Numbered list">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
+                  </button>
+                  <span class="np-tb-divider"></span>
+                  <button class="np-tb-btn" onclick="document.execCommand('indent')"  title="Indent">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="8" x2="21" y2="8"/><line x1="3" y1="16" x2="21" y2="16"/><polyline points="9 12 12 9 9 6"/></svg>
+                  </button>
+                  <button class="np-tb-btn" onclick="document.execCommand('outdent')" title="Outdent">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="8" x2="21" y2="8"/><line x1="3" y1="16" x2="21" y2="16"/><polyline points="15 12 12 9 15 6"/></svg>
+                  </button>
+                  <span class="np-tb-divider"></span>
+                  <input type="color" class="np-tb-color" id="np-tb-font-color" value="#1e0a3c" title="Font colour" onchange="document.execCommand('foreColor',false,this.value)">
+                  <button class="np-tb-btn" onclick="document.execCommand('removeFormat')" title="Clear formatting">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.5 3.5l8 8-11 11H3v-6.5z"/><line x1="18" y1="2" x2="22" y2="6"/><line x1="3" y1="21" x2="21" y2="3"/></svg>
+                  </button>
+                </div>
+                <div class="np-editor" id="np-editor" contenteditable="true"
+                     data-placeholder="Start writing your note here…"
+                     oninput="onNotepadEditorInput()"></div>
+                <div class="np-status-bar">
+                  <span id="np-word-count">0 words</span>
+                  <span class="np-stats-dot">·</span>
+                  <span id="np-char-count">0 chars</span>
+                  <span class="np-stats-dot">·</span>
+                  <span id="np-read-time">0 min read</span>
+                </div>
+              </div>
+
+              <!-- Whiteboard panel -->
+              <div class="np-panel" id="np-panel-whiteboard" style="display:none">
+                <div id="np-whiteboard-host" class="np-wb-host"></div>
+              </div>
+
+            </div><!-- /np-note-wrap -->
+          </div><!-- /np-viewer -->
+
+        </div><!-- /np-layout -->
+      </section><!-- /app-notepad -->
+
+      <!-- ═══════════ BACKPACK ═══════════ -->
+      <section class="app-section" id="app-backpack">
+        <div class="bp-layout">
+          <div class="bp-root" id="bp-root">
+            <div class="bp-loading">Loading your backpack…</div>
+          </div>
+        </div>
+      </section><!-- /app-backpack -->
+
+    </main>
+  </div><!-- end .app-body -->
+</div><!-- end #page-app -->
+
+<!-- ═══════════ CREATE ROOM MODAL ═══════════ -->
+<div class="modal-overlay" id="create-room-modal" onclick="closeCreateRoomModal(event)">
+  <div class="modal-box" style="max-width:480px;text-align:left;padding:32px">
+    <h3 style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;margin-bottom:18px;color:var(--text-primary)">Create Study Room</h3>
+    <div class="note-field">
+      <label>Room Name</label>
+      <input type="text" id="room-name-input" placeholder="e.g. Algorithms Grind Session" />
+    </div>
+    <div class="note-field">
+      <label>Subject</label>
+      <select id="room-subject-input" style="padding:10px 14px;border:1.5px solid var(--border-input);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--text-primary);background:var(--input-bg);outline:none;width:100%">
+        <option value="">Select subject…</option>
+        <option>Mathematics</option><option>Computer Science</option><option>Physics</option>
+        <option>Biology</option><option>Chemistry</option><option>Literature</option>
+        <option>History</option><option>Algorithms</option><option>Web Development</option><option>Biochemistry</option>
+      </select>
+    </div>
+    <div class="note-field">
+      <label>Mode</label>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <label class="room-mode-option" id="rmode-audio">
+          <input type="radio" name="room-mode" value="audio" checked />
+          <span>🎙 Audio Only</span>
+        </label>
+        <label class="room-mode-option" id="rmode-video">
+          <input type="radio" name="room-mode" value="video" />
+          <span>📹 Audio + Video</span>
+        </label>
+      </div>
+    </div>
+    <div class="note-field" style="margin-bottom:0">
+      <label>Lock room</label>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--border-input);border-radius:10px;background:var(--input-bg);cursor:pointer" onclick="toggleCreateLock()">
+        <svg id="create-lock-icon" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;flex-shrink:0"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span style="flex:1;font-size:.88rem;color:var(--text-primary)">Require PIN to join</span>
+        <div id="create-lock-track" style="width:36px;height:20px;border-radius:10px;background:var(--border-panel);position:relative;flex-shrink:0;transition:background .2s">
+          <div id="create-lock-thumb" style="width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s"></div>
+        </div>
+      </div>
+      <div id="create-pin-wrap" style="display:none;margin-top:10px">
+        <div style="display:flex;gap:8px;justify-content:center">
+          <input class="pin-digit" id="cpin-0" type="text" inputmode="numeric" maxlength="1" oninput="createPinInput(0)" onkeydown="createPinKey(event,0)" />
+          <input class="pin-digit" id="cpin-1" type="text" inputmode="numeric" maxlength="1" oninput="createPinInput(1)" onkeydown="createPinKey(event,1)" />
+          <input class="pin-digit" id="cpin-2" type="text" inputmode="numeric" maxlength="1" oninput="createPinInput(2)" onkeydown="createPinKey(event,2)" />
+          <input class="pin-digit" id="cpin-3" type="text" inputmode="numeric" maxlength="1" oninput="createPinInput(3)" onkeydown="createPinKey(event,3)" />
+        </div>
+        <div style="font-size:.72rem;color:var(--text-light);margin-top:6px;text-align:center">Share this 4-digit PIN with people you invite</div>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="modal-cancel" onclick="closeCreateRoomModal()">Cancel</button>
+      <button class="modal-confirm" onclick="createRoom()">Create &amp; Join</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN entry overlay — shown when joining a locked room -->
+<div id="pin-entry-overlay" class="pin-entry-overlay" style="display:none">
+  <div class="pin-entry-box">
+    <div class="pin-entry-icon">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <div class="pin-entry-room-name" id="pin-entry-room-name">Room</div>
+    <div class="pin-entry-sub" id="pin-entry-sub">Enter the 4-digit PIN to join</div>
+    <div class="pin-digits">
+      <input class="pin-digit" id="jpin-0" type="text" inputmode="numeric" maxlength="1" oninput="joinPinInput(0)" onkeydown="joinPinKey(event,0)" />
+      <input class="pin-digit" id="jpin-1" type="text" inputmode="numeric" maxlength="1" oninput="joinPinInput(1)" onkeydown="joinPinKey(event,1)" />
+      <input class="pin-digit" id="jpin-2" type="text" inputmode="numeric" maxlength="1" oninput="joinPinInput(2)" onkeydown="joinPinKey(event,2)" />
+      <input class="pin-digit" id="jpin-3" type="text" inputmode="numeric" maxlength="1" oninput="joinPinInput(3)" onkeydown="joinPinKey(event,3)" />
+    </div>
+    <button class="pin-entry-cancel" onclick="closePinEntry()">Cancel</button>
+  </div>
+</div>
+
+<!-- 25502550255025502550255025502550255025502550 NOTEPAD 2014 NEW FOLDER MODAL 25502550255025502550255025502550255025502550 -->
+<div class="modal-overlay" id="np-folder-modal" onclick="closeNewFolderModal(event)">
+  <div class="modal-box" style="max-width:400px;text-align:left;padding:32px">
+    <h3 style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;margin-bottom:20px;color:var(--text-primary)">New Folder</h3>
+    <div class="note-field">
+      <label>Folder name</label>
+      <input type="text" id="np-folder-name-input" placeholder="e.g. Biology, Semester 22026" maxlength="60" />
+    </div>
+    <div class="note-field">
+      <label>Colour</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input type="color" id="np-folder-color-input" value="#c8882a" style="width:38px;height:38px;border:none;border-radius:8px;cursor:pointer;background:none">
+        <div id="np-folder-color-presets" style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="np-fc-preset" data-color="#c8882a" style="background:#c8882a"></button>
+          <button class="np-fc-preset" data-color="#3b82f6" style="background:#3b82f6"></button>
+          <button class="np-fc-preset" data-color="#22c55e" style="background:#22c55e"></button>
+          <button class="np-fc-preset" data-color="#ef4444" style="background:#ef4444"></button>
+          <button class="np-fc-preset" data-color="#f97316" style="background:#f97316"></button>
+          <button class="np-fc-preset" data-color="#ec4899" style="background:#ec4899"></button>
+          <button class="np-fc-preset" data-color="#eab308" style="background:#eab308"></button>
+          <button class="np-fc-preset" data-color="#64748b" style="background:#64748b"></button>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="modal-cancel" onclick="closeNewFolderModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmNewFolder()">Create Folder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SHARE TOAST ═══════════ -->
+
+<!-- ═══════════════════════════════════════
+     GROUP CHAT PICKER MODAL
+     ═══════════════════════════════════════ -->
+<div class="modal-overlay" id="group-picker-modal" onclick="closeGroupPickerModal(event)">
+  <div class="modal-box group-picker-box" onclick="event.stopPropagation()">
+    <div class="group-picker-header">
+      <div class="group-picker-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        New Group Chat
+      </div>
+      <button class="group-picker-close" onclick="closeGroupPickerModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="group-picker-name-row">
+      <input type="text" id="group-chat-name" class="group-name-input" placeholder="Group name (e.g. DSA Study Squad)…" maxlength="40" />
+    </div>
+
+    <p class="group-picker-sub">Select connected buddies to add:</p>
+    <div class="group-picker-search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="group-picker-search" placeholder="Search buddies…" oninput="filterGroupPickerList(this.value)" />
+    </div>
+
+    <div class="group-picker-list" id="group-picker-list">
+      <!-- Injected by openGroupPickerModal() -->
+    </div>
+
+    <div class="group-picker-selected" id="group-picker-selected">
+      <!-- Selected chips shown here -->
+    </div>
+
+    <div class="group-picker-actions">
+      <button class="modal-cancel" onclick="closeGroupPickerModal()">Cancel</button>
+      <button class="modal-confirm group-create-confirm" id="group-create-btn" onclick="createGroupChat()" disabled>
+        Create Group
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     JOIN REQUESTS MODAL (host manages from feed)
+     ═══════════════════════════════════════ -->
+<div class="modal-overlay" id="join-requests-modal" onclick="closeJoinRequestsModal(event)">
+  <div class="modal-box join-requests-box" onclick="event.stopPropagation()">
+    <div class="join-requests-header">
+      <div class="join-requests-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Join Requests
+      </div>
+      <button class="group-picker-close" onclick="closeJoinRequestsModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="join-requests-list" id="join-requests-list">
+      <!-- Injected by openJoinRequestsPanel() -->
+    </div>
+  </div>
+</div>
+
+<div class="share-toast" id="share-toast">🔗 Link copied to clipboard!</div>
+
+
+<!-- ═══════════ LOGOUT CONFIRMATION MODAL ═══════════ -->
+<div class="modal-overlay" id="logout-modal" onclick="closeLogoutModal(event)">
+  <div class="modal-box">
+    <div class="modal-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </div>
+    <h3>Log Out?</h3>
+    <p>Are you sure you want to log out of Study Buddy?</p>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeLogoutModal()">Stay Logged In</button>
+      <button class="modal-confirm modal-confirm--danger" onclick="confirmLogout()">Yes, Log Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- Supabase client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- Supabase config — anon key is safe to expose in frontend -->
+  <script>
+    const SUPABASE_URL  = 'https://ycvvwkpauakhdwhbgknj.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljdnZ3a3BhdWFraGR3aGJna25qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzE3MzIsImV4cCI6MjA5MjU0NzczMn0.REtUh-gGQrirEVyFh06vQvHB8WaQ00aAbaSkzPBZOe0';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  </script>
+<!-- ═══════════ COMPOSE / NEW DM MODAL ═══════════ -->
+<div class="modal-overlay" id="compose-modal" onclick="closeComposeModal(event)" style="display:none">
+  <div class="modal-box" style="max-width:420px">
+    <h3 class="modal-title">Start a conversation</h3>
+    <p style="font-size:.85rem;color:var(--text-light);margin-bottom:16px">Message a buddy directly or create a study group.</p>
+
+    <div class="compose-type-toggle">
+      <button class="compose-type-btn active" id="compose-type-dm" onclick="_setComposeType('dm')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        New Message
+      </button>
+      <button class="compose-type-btn" id="compose-type-group" onclick="_setComposeType('group')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        New Group
+      </button>
+    </div>
+
+    <div class="compose-search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="compose-search-input" id="compose-search-input" type="text"
+        placeholder="Search buddies…"
+        oninput="filterComposeBuddies(this.value)" autocomplete="off" />
+    </div>
+    <div class="compose-buddy-list" id="compose-buddy-list">
+      <!-- Injected by openComposeModal() -->
+    </div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="modal-cancel" onclick="closeComposeModal()">Cancel</button>
+      <button class="modal-confirm" id="compose-confirm-btn" onclick="_confirmCompose()" style="display:none">Start Chat</button>
+    </div>
+  </div>
+</div>
+
+
+  <!-- ── FAQ Modal ── -->
+  <div class="faq-modal-backdrop" id="faq-backdrop" onclick="closeFaqModal()"></div>
+  <div class="faq-modal" id="faq-modal" role="dialog" aria-modal="true" aria-label="Frequently asked questions">
+    <div class="faq-modal-head">
+      <div class="faq-modal-title">Frequently asked <em>questions</em></div>
+      <button class="faq-close-btn" onclick="closeFaqModal()" aria-label="Close">&#x2715;</button>
+    </div>
+    <div class="faq-modal-body">
+
+      <div class="faq-cat">
+        <div class="faq-cat-head" onclick="toggleFaqCat(this)">
+          <div class="faq-cat-left">
+            <div class="faq-cat-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+            <span class="faq-cat-name">Getting Started</span><span class="faq-cat-count">4 questions</span>
+          </div>
+          <svg class="faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="faq-cat-items">
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaqItem(this)">What is Study Buddy?<svg class="faq-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <div class="faq-a">Study Buddy is a platform that connects students with study partners, provides live session tools — video, whiteboard, and shared notepad — and lets creators publish study materials like notes, quizzes, and guides.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaqItem(this)">Is it free to join?<svg class="faq-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <div class="faq-a">Yes — creating an account is completely free. Some creator content may be paid, but the core platform features are always free.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaqItem(this)">How do I find study partners?<svg class="faq-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <div class="faq-a">Go to Find Buddies and filter by subject, schedule, and study style. You can send match requests directly from there.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaqItem(this)">What subjects are supported?<svg class="faq-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <div class="faq-a">We support a wide range across CS, IT, Multimedia, Business, Engineering, Health Sciences, and Social Sciences. Set your subjects in your profile to get matched and see targeted content.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-cat">
+        <div class="faq-cat-head" onclick="toggleFaqCat(this)">
+          <div class="faq-cat-left">
+            <div class="faq-cat-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+            <span class="faq-cat-name">Account &amp; Profile</span><span class="faq-cat-count">3 questions</span>
+          </div>
+          <svg class="faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="faq-cat-items">
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaqItem(this)">How do I update my subjects?<svg class="faq-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <div class="faq-a">Go to your profile and click Edit Profile. Use the subject picker to search and add up to 5 subjects. Your subjects determine which study ads and partners you see.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaqItem(this)">Can I reset my password?<svg class="faq-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <div class="faq-a">Password reset via email is coming soon. For now, contact our support team via the Contact page if you're locked out.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaqItem(this)">How do I delete my account?<svg class="faq-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <div class="faq-a">Send us a message via the Contact page and our team will handle the deletion within 24 hours.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-cat">
+        <div class="faq-cat-head" onclick="toggleFaqCat(this)">
+          <div class="faq-cat-left">
+            <div class="faq-cat-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+            <span class="faq-cat-name">Creator Hub</span><span class="faq-cat-count">3 questions</span>
+          </div>
+          <svg class="faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="faq-cat-items">
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaqItem(this)">How do I become a creator?<svg class="faq-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <div class="faq-a">Apply through the Creator Hub section after logging in. Once approved, you can publish notes, quizzes, guides, templates, and flashcards.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaqItem(this)">Do products need a subject tag?<svg class="faq-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <div class="faq-a">Yes — a subject tag is required when creating a product. It makes your content discoverable by students with matching subjects and eligible for ad rotation.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaqItem(this)">How do I earn from my content?<svg class="faq-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <div class="faq-a">You can set a price on your products and quizzes. Payment processing integration is currently in development.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-cat">
+        <div class="faq-cat-head" onclick="toggleFaqCat(this)">
+          <div class="faq-cat-left">
+            <div class="faq-cat-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
+            <span class="faq-cat-name">Sessions &amp; Matching</span><span class="faq-cat-count">2 questions</span>
+          </div>
+          <svg class="faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="faq-cat-items">
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaqItem(this)">How do live sessions work?<svg class="faq-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <div class="faq-a">Sessions include video calling, a shared whiteboard, and a collaborative notepad — all in one room. Create or join a room from the Sessions tab after logging in.</div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaqItem(this)">Can I lock a session with a PIN?<svg class="faq-item-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <div class="faq-a">Yes — when creating a room you can set a 4-digit PIN. Only people with the PIN can join the session.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function openFaqModal() {
+      const modal   = document.getElementById('faq-modal');
+      const backdrop = document.getElementById('faq-backdrop');
+      if (!modal) return;
+      modal.classList.add('open');
+      backdrop.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeFaqModal() {
+      const modal   = document.getElementById('faq-modal');
+      const backdrop = document.getElementById('faq-backdrop');
+      if (!modal) return;
+      modal.classList.remove('open');
+      backdrop.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    function toggleFaqCat(head) {
+      const cat   = head.parentElement;
+      const items = cat.querySelector('.faq-cat-items');
+      const chev  = head.querySelector('.faq-chevron');
+      const isOpen = cat.classList.contains('open');
+      document.querySelectorAll('.faq-cat').forEach(c => {
+        c.classList.remove('open');
+        c.querySelector('.faq-chevron').style.transform = '';
+      });
+      if (!isOpen) {
+        cat.classList.add('open');
+        chev.style.transform = 'rotate(180deg)';
+      }
+    }
+    function toggleFaqItem(qEl) {
+      const item   = qEl.parentElement;
+      const isOpen = item.classList.contains('open');
+      item.closest('.faq-cat-items').querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    }
+    function toggleLndDrawer() {
+      const drawer   = document.getElementById('lnd-drawer');
+      const backdrop = document.getElementById('lnd-backdrop');
+      if (!drawer) return;
+      const opening = !drawer.classList.contains('open');
+      drawer.classList.toggle('open');
+      if (backdrop) backdrop.classList.toggle('open');
+      document.body.style.overflow = opening ? 'hidden' : '';
+      _initSheetSwipe(drawer, toggleLndDrawer);
+    }
+    function toggleDrawer(id) {
+      const drawer   = document.getElementById(id);
+      const backdrop = document.getElementById(id.replace('-drawer', '-backdrop'));
+      if (!drawer) return;
+      const opening = !drawer.classList.contains('open');
+      drawer.classList.toggle('open');
+      if (backdrop) backdrop.classList.toggle('open');
+      document.body.style.overflow = opening ? 'hidden' : '';
+      if (opening) _initSheetSwipe(drawer, () => toggleDrawer(id));
+    }
+    /* Swipe-down to dismiss */
+    function _initSheetSwipe(sheet, closeFn) {
+      let startY = 0, dragging = false;
+      function onStart(e) {
+        startY   = (e.touches ? e.touches[0].clientY : e.clientY);
+        dragging = true;
+        sheet.style.transition = 'none';
+      }
+      function onMove(e) {
+        if (!dragging) return;
+        const dy = (e.touches ? e.touches[0].clientY : e.clientY) - startY;
+        if (dy > 0) sheet.style.transform = `translateY(${dy}px)`;
+      }
+      function onEnd(e) {
+        if (!dragging) return;
+        dragging = false;
+        sheet.style.transition = '';
+        sheet.style.transform  = '';
+        const dy = (e.changedTouches ? e.changedTouches[0].clientY : e.clientY) - startY;
+        if (dy > 80) closeFn();
+      }
+      sheet.removeEventListener('touchstart', sheet._swipeStart);
+      sheet.removeEventListener('touchmove',  sheet._swipeMove);
+      sheet.removeEventListener('touchend',   sheet._swipeEnd);
+      sheet._swipeStart = onStart;
+      sheet._swipeMove  = onMove;
+      sheet._swipeEnd   = onEnd;
+      sheet.addEventListener('touchstart', onStart, { passive: true });
+      sheet.addEventListener('touchmove',  onMove,  { passive: true });
+      sheet.addEventListener('touchend',   onEnd);
+    }
+  </script>
+  <script src="shared.js"></script><!-- shared utilities: escHtml, avatarColor, avatarHTML, getInitials, formatTimeAgo, etc. -->
+  <script src="app.js"></script>
+  <script src="webrtc.js"></script>
+  <script src="whiteboard.js"></script>
+  <script src="profile.js"></script>
+  <script src="creator.js"></script>
+  <script src="findbuddies.js"></script>
+  <script src="messages.js"></script>
+  <script src="notepad.js"></script>
+  <script src="creator-feed.js"></script>
+</body>
+</html>
