@@ -1103,26 +1103,32 @@ body.night .app-sidebar.sidebar-collapsed .sidebar-profile:hover {
     margin-top: 4px;
     padding: 10px 14px;
     border-radius: 11px;
-    border: 1.5px solid #fca5a5;
+    border: 1px solid var(--border-card);
     background: transparent;
-    color: #ef4444;
+    color: var(--text-primary);
     font-family: var(--font-body);
     font-size: .9rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background .18s;
+    transition: background .18s, border-color .18s, color .18s;
   }
   .mobile-drawer-logout svg {
     width: 16px; height: 16px;
-    stroke: #ef4444; fill: none; stroke-width: 2;
+    stroke: var(--text-light); fill: none; stroke-width: 2;
     flex-shrink: 0;
   }
-  .mobile-drawer-logout:hover { background: #fee2e2; }
+  .mobile-drawer-logout:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #ef4444;
+  }
+  .mobile-drawer-logout:hover svg { stroke: #ef4444; }
   body.night .mobile-drawer-logout:hover {
     background: var(--status-danger-bg);
     border-color: var(--status-danger-bdr);
     color: var(--status-danger-txt);
   }
+  body.night .mobile-drawer-logout:hover svg { stroke: var(--status-danger-txt); }
 
   /* ── Feed page ── */
   #app-feed .feed-main {
@@ -3459,19 +3465,6 @@ body.night .ad-card-subject { background: rgba(200,136,42,.18); }
 }
 .ad-card-cta:hover  { background: var(--navy-light); transform: translateY(-1px); }
 .ad-card-cta:active { transform: translateY(0); }
-
-/* ── Desktop sidebar ad — cover + outlined CTA layout ── */
-.ad-card-cover { background:var(--bg-panel); border-radius:var(--radius-sm); padding:10px 12px 8px; display:flex; flex-direction:column; gap:6px; }
-.ad-card-cover-top { display:flex; align-items:center; justify-content:space-between; }
-.ad-card-cover-body { display:flex; align-items:flex-start; gap:8px; }
-.ad-card-cover-body .ad-card-icon { font-size:1.5rem; flex-shrink:0; line-height:1.2; }
-.ad-card-cover-body .ad-card-title { font-size:.9rem; white-space:normal; line-height:1.35; }
-.ad-card-body { display:flex; flex-direction:column; gap:7px; padding:0 2px; }
-.ad-card-divider { height:1px; background:var(--border-card); margin:2px 0; }
-.ad-card-cta-outline { background:transparent; color:var(--brand-base); border:1.5px solid var(--brand-base); }
-.ad-card-cta-outline:hover { background:var(--brand-base); color:#fff; transform:translateY(-1px); }
-body.night .ad-card-cta-outline { color:var(--brand-base); border-color:var(--brand-base); }
-body.night .ad-card-cta-outline:hover { background:var(--brand-base); color:#fff; }
 
 /* Rotation dots */
 .ad-dots {

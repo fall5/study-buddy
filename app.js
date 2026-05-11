@@ -1526,21 +1526,6 @@ function _ensureDrawerLogout() {
   const aside = document.getElementById('app-sidebar');
   if (!aside || aside.querySelector('.mobile-drawer-logout')) return;
 
-  // ── Sidebar ad — injected between nav items and Log Out ──
-  const adBlock = document.createElement('div');
-  adBlock.className = 'sidebar-ad-section';
-  adBlock.setAttribute('aria-label', 'Sponsored');
-  adBlock.innerHTML = `
-    <span class="sidebar-ad-label">Sponsored</span>
-    <div class="sidebar-ad-placeholder">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="3" y="3" width="18" height="18" rx="3"/>
-        <path d="M3 9h18M9 21V9"/>
-      </svg>
-      Loading…
-    </div>`;
-
   const btn = document.createElement('button');
   btn.className = 'mobile-drawer-logout';
   btn.innerHTML = `
@@ -1556,10 +1541,8 @@ function _ensureDrawerLogout() {
   const dividers = aside.querySelectorAll('.sidebar-divider');
   const last = dividers[dividers.length - 1];
   if (last) {
-    last.after(adBlock);
-    adBlock.after(btn);
+    last.after(btn);
   } else {
-    aside.appendChild(adBlock);
     aside.appendChild(btn);
   }
 }
@@ -5699,7 +5682,7 @@ async function _bpRenderProductList(root) {
         <div class="bp-unified-sub">${creatorProds.length} purchased product${creatorProds.length !== 1 ? 's' : ''}</div>
       </div>
     </div>
-    <div class="creator-products-grid">
+    <div class="bp-item-list">
       ${creatorProds.length ? creatorProds.map(p => {
         const ptype   = (p.type || 'notes').toLowerCase();
         const icon    = TYPE_ICONS[ptype] || '📦';
@@ -5719,36 +5702,15 @@ async function _bpRenderProductList(root) {
           ? `<button class="bp-item-btn bp-btn-dl" onclick="bpDownloadProduct('${escHtml(p.id)}')" title="Download files">
                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
              </button>` : '';
-        const priceBadge = isFree
-          ? `<span class="cp-price-badge cp-price-free">Free</span>`
-          : `<span class="cp-price-badge cp-price-paid">₱${escHtml(String(p.price))}</span>`;
-        const fileCount = Array.isArray(p.attachedFiles) ? p.attachedFiles.length : 0;
-        return `
-        <div class="cp-card cp-card--${ptype}">
-          <div class="cp-band cp-band--${ptype}">
-            <span class="cp-band-icon">${icon}</span>
-            <div class="cp-band-meta">
-              <span class="cp-type-badge">${typeLabel}</span>
-              ${priceBadge}
-            </div>
+        return `<div class="bp-item-row">
+          <div class="bp-item-icon-wrap">${icon}</div>
+          <div class="bp-item-body">
+            <div class="bp-item-title">${escHtml(p.title || 'Untitled')}</div>
+            <div class="bp-item-meta">${escHtml(typeLabel)}${p.attachedFiles?.length ? ' · ' + p.attachedFiles.length + ' file' + (p.attachedFiles.length !== 1 ? 's' : '') : ''}</div>
           </div>
-          <div class="cp-body">
-            <h4 class="cp-title" title="${escHtml(p.title || 'Untitled')}">${escHtml(p.title || 'Untitled')}</h4>
-            <p class="cp-desc">${escHtml(p.description || 'No description provided.')}</p>
-          </div>
-          <div class="cp-foot">
-            <div class="cp-stats">
-              <span class="cp-stat">
-                <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                ${fileCount} file${fileCount !== 1 ? 's' : ''}
-              </span>
-              ${p.subject ? `<div class="cp-stat-div"></div><span class="cp-stat">${escHtml(p.subject)}</span>` : ''}
-            </div>
-            <div class="cp-actions">
-              ${actionBtn}
-              ${dlBtn}
-            </div>
-          </div>
+          <span class="bp-item-badge ${isFree ? 'bib-free' : 'bib-paid'}">${isFree ? 'Free' : '₱' + p.price}</span>
+          ${actionBtn}
+          ${dlBtn}
         </div>`;
       }).join('') : '<div class="bp-empty"><p>No products found from this creator.</p></div>'}
     </div>`;
@@ -6165,37 +6127,21 @@ async function _bpRenderQuizList(root) {
         <div class="bp-unified-sub">${creatorQuizzes.length} unlocked quiz${creatorQuizzes.length !== 1 ? 'zes' : ''}</div>
       </div>
     </div>
-    <div class="creator-products-grid">
+    <div class="bp-item-list">
       ${creatorQuizzes.length ? creatorQuizzes.map(q => {
         const qCount = Array.isArray(q.questions) ? q.questions.length : 0;
         const isFree = !q.price || q.price === 0;
-        const priceBadge = isFree
-          ? `<span class="cp-price-badge cp-price-free">Free</span>`
-          : `<span class="cp-price-badge cp-price-paid">₱${escHtml(String(q.price))}</span>`;
-        return `
-        <div class="cp-card cp-card--quiz">
-          <div class="cp-band cp-band--quiz">
-            <span class="cp-band-icon">🧠</span>
-            <div class="cp-band-meta">
-              <span class="cp-type-badge">Quiz</span>
-              ${priceBadge}
-            </div>
+        return `<div class="bp-item-row">
+          <div class="bp-item-icon-wrap">🧠</div>
+          <div class="bp-item-body">
+            <div class="bp-item-title">${escHtml(q.title || 'Untitled Quiz')}</div>
+            <div class="bp-item-meta">${qCount} question${qCount !== 1 ? 's' : ''}${q.subject ? ' · ' + escHtml(q.subject) : ''}</div>
           </div>
-          <div class="cp-body">
-            <h4 class="cp-title" title="${escHtml(q.title || 'Untitled Quiz')}">${escHtml(q.title || 'Untitled Quiz')}</h4>
-            <p class="cp-desc">${q.subject ? escHtml(q.subject) + ' · ' : ''}${qCount} question${qCount !== 1 ? 's' : ''}</p>
-          </div>
-          <div class="cp-foot">
-            <div class="cp-stats">
-              ${q.subject ? `<span class="cp-stat">${escHtml(q.subject)}</span>` : ''}
-            </div>
-            <div class="cp-actions">
-              <button class="cp-btn-secondary" onclick="bpTakeSubQuiz('${escHtml(q.id)}')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                Take Quiz
-              </button>
-            </div>
-          </div>
+          <span class="bp-item-badge ${isFree ? 'bib-free' : 'bib-quiz'}">${isFree ? 'Free' : '₱' + q.price}</span>
+          <button class="bp-item-btn bp-btn-play" onclick="bpTakeSubQuiz('${escHtml(q.id)}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Take Quiz
+          </button>
         </div>`;
       }).join('') : '<div class="bp-empty"><p>No quizzes found from this creator.</p></div>'}
     </div>`;

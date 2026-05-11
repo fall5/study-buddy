@@ -1790,7 +1790,16 @@ body.night .cp-btn-cta--owned:hover { background: rgba(255,255,255,.08); }
   align-items: flex-start;
   justify-content: space-between;
 }
-.an-card-icon { font-size: 1.2rem; line-height: 1; margin-bottom: 8px; }
+.an-card-icon {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  color: var(--brand-base);
+  flex-shrink: 0;
+}
+.an-card-icon svg { width: 18px; height: 18px; stroke: var(--brand-base); }
 .an-card-val {
   font-family: var(--font-display);
   font-size: 1.5rem; font-weight: 800;
