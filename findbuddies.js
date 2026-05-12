@@ -52,8 +52,13 @@ async function getMatchBetween(emailA, emailB) {
 ══════════════════════════════════════ */
 async function getBuddyPool() {
   if (!currentUser) return [];
-  const all = await loadAccounts();
-  return all.filter(a => a.email.toLowerCase() !== currentUser.email.toLowerCase());
+  // Fetch directly from Supabase — bypass any stale local cache
+  const { data, error } = await sb.from('accounts').select('*');
+  if (error) { console.error('[StudyBuddy] getBuddyPool error:', error.message); return []; }
+  const all = (data || []).map(r => (typeof rowToAccount === 'function' ? rowToAccount(r) : r));
+  const pool = all.filter(a => (a.email || '').toLowerCase() !== currentUser.email.toLowerCase());
+  console.log('[StudyBuddy] getBuddyPool:', pool.length, 'users found');
+  return pool;
 }
 
 /* ══════════════════════════════════════
@@ -455,25 +460,37 @@ async function toggleBuddyView() {
 
 async function _countConnected() {
   if (!currentUser) return 0;
-  const matches = await _getMatches();
-  return matches.filter(m =>
-    m.status === 'accepted' &&
-    (m.from === currentUser.email || m.to === currentUser.email)
-  ).length;
+  // Query Supabase directly so count is always accurate after a new connection
+  const { data: asSender }   = await sb.from('matches').select('id')
+    .eq('from_email', currentUser.email).eq('status', 'accepted');
+  const { data: asReceiver } = await sb.from('matches').select('id')
+    .eq('to_email', currentUser.email).eq('status', 'accepted');
+  const ids = new Set([...(asSender || []).map(r => r.id), ...(asReceiver || []).map(r => r.id)]);
+  return ids.size;
 }
 
 async function _renderBuddiesOnly() {
-  const [matches, all] = await Promise.all([_getMatches(), loadAccounts()]);
+  // Always hit Supabase fresh — never use stale account cache
+  const { data: rawAccounts, error: accErr } = await sb.from('accounts').select('*');
+  if (accErr) { console.error('[StudyBuddy] _renderBuddiesOnly accounts error:', accErr.message); }
+
+  // Also hit matches fresh — nuke cache first to guarantee fresh read
+  _buddyMatchCache = null;
+  const matches = await _getMatches();
+
   const query = (document.getElementById('buddy-search')?.value || '').toLowerCase();
+  const all   = (rawAccounts || []).map(r => (typeof rowToAccount === 'function' ? rowToAccount(r) : r));
 
   const connectedEmails = matches
     .filter(m => m.status === 'accepted' &&
       (m.from === currentUser?.email || m.to === currentUser?.email))
     .map(m => m.from === currentUser?.email ? m.to : m.from);
 
+  console.log('[StudyBuddy] _renderBuddiesOnly: connectedEmails=', connectedEmails);
+
   const pool = all.filter(a =>
     connectedEmails.includes(a.email) &&
-    (!query || a.name.toLowerCase().includes(query))
+    (!query || (a.name || '').toLowerCase().includes(query))
   );
 
   renderBuddies(pool);
@@ -494,3 +511,34 @@ async function _initBuddyToggle() {
 }
 document.addEventListener('DOMContentLoaded', _initBuddyToggle);
 
+/* ══════════════════════════════════════
+   PUBLIC — refreshBuddyConnectionUI
+   Called externally (e.g. from app.js _confirmSubscription) whenever
+   a new accepted match is written directly to Supabase so the Find
+   Buddies page reflects it immediately without a full page reload.
+   Safe to call even when the Find Buddies panel is not visible —
+   guards on DOM element presence mean it's a no-op in that case.
+══════════════════════════════════════ */
+async function refreshBuddyConnectionUI() {
+  // 1. Hard-nuke the match cache — guaranteed fresh Supabase read
+  _buddyMatchCache = null;
+
+  // 2. Update the connected-count badge
+  const countEl = document.getElementById('buddy-connected-count');
+  if (countEl) countEl.textContent = await _countConnected();
+
+  // 3. Re-render whichever view is active — both paths query Supabase directly
+  if (_buddyViewMode === 'buddies') {
+    await _renderBuddiesOnly();
+  } else {
+    // Re-run filterBuddies so the grid re-renders with fresh match state
+    // (shows "Message" instead of "Connect" for the newly-connected creator)
+    await filterBuddies();
+  }
+
+  // 4. Refresh Matches panel tabs if visible
+  if (typeof renderMatches === 'function') await renderMatches();
+
+  // 5. Sidebar badge counts
+  if (typeof updateSidebarBadges === 'function') updateSidebarBadges();
+}

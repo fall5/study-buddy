@@ -574,7 +574,10 @@ function buildQuizProductCard(q) {
         <div class="cp-actions">
           <button class="cp-btn-secondary" onclick="openQuizEditor('${escHtml(q.id)}')">Edit</button>
           <button class="cp-btn-secondary" onclick="previewQuiz('${escHtml(q.id)}')">Preview</button>
-          <button class="cp-btn-secondary" onclick="shareQuizToFeed('${escHtml(q.id)}')">Share to Feed</button>
+          <button class="cp-btn-secondary cp-btn-share" onclick="shareQuizToFeed('${escHtml(q.id)}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
           <button class="cp-btn-danger" onclick="deleteQuiz('${escHtml(q.id)}')">Delete</button>
         </div>
       </div>
@@ -624,7 +627,10 @@ function buildProductCard(p) {
         </div>
         <div class="cp-actions">
           <button class="cp-btn-secondary" onclick="editProduct('${escHtml(p.id)}')">Edit</button>
-          <button class="cp-btn-secondary" onclick="shareProductToFeed('${escHtml(p.id)}')">Share to Feed</button>
+          <button class="cp-btn-secondary cp-btn-share" onclick="shareProductToFeed('${escHtml(p.id)}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
           <button class="cp-btn-danger" onclick="deleteProduct('${escHtml(p.id)}')">Delete</button>
         </div>
       </div>
@@ -2764,9 +2770,9 @@ async function loadCreatorQuizzes(user) {
                 Edit
               </button>
               <button class="cp-btn-secondary" onclick="previewQuiz('${q.id}')">Preview</button>
-              <button class="cp-btn-secondary" onclick="shareQuizToFeed('${q.id}')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-                Share to Feed
+              <button class="cp-btn-secondary cp-btn-share" onclick="shareQuizToFeed('${q.id}')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                Share
               </button>
               <button class="cp-btn-danger" onclick="deleteQuiz('${q.id}')">Delete</button>
             </div>

@@ -276,6 +276,8 @@ function _appendIncomingDMBubble(msg) {
     ? _buildInviteCardHTML(msg, false)
     : msg.type === 'sub_invite'
     ? _buildSubInviteCardHTML(msg, false)
+    : (msg.type === 'product_share' || msg.type === 'quiz_share')
+    ? _buildShareCardHTML(msg, false)
     : `<div class="chat-bubble">${escHtml(msg.text || '')}</div>`;
 
   const div = document.createElement('div');
@@ -633,6 +635,85 @@ function _buildSubInviteCardHTML(m, isMine) {
     </div>
     ${actionArea}
   </div>`;
+}
+
+/* ══════════════════════════════════════
+   PRODUCT / QUIZ SHARE CARD
+   type === 'product_share' | 'quiz_share'
+   attachment: { itemId, postType, title, price, subject, description, creatorEmail, creatorName }
+   Renders a rich interactive card — receiver can view/buy the product
+   or attempt the quiz directly from the message.
+══════════════════════════════════════ */
+function _buildShareCardHTML(m, isMine) {
+  let att = m.attachment;
+  if (typeof att === 'string') { try { att = JSON.parse(att); } catch (_) { att = {}; } }
+  att = att || {};
+
+  const isQuiz    = (m.type === 'quiz_share') || (att.postType === 'quiz');
+  const icon      = isQuiz ? '🧠' : '📦';
+  const typeLabel = isQuiz ? 'Quiz' : 'Product';
+  const title     = att.title       || 'Untitled';
+  const price     = att.price       || 0;
+  const subject   = att.subject     || '';
+  const desc      = att.description || '';
+  const creator   = att.creatorName || att.creatorEmail || 'Creator';
+  const itemId    = att.itemId      || '';
+
+  const priceTag = isQuiz
+    ? (price === 0 ? '<span class="share-card-free">Free</span>' : `<span class="share-card-price">₱${price}</span>`)
+    : (price === 0 ? '<span class="share-card-free">Free</span>' : `<span class="share-card-price">₱${price}</span>`);
+
+  const metaLine = isQuiz
+    ? `${subject ? escHtml(subject) + ' · ' : ''}Quiz`
+    : (desc ? `<span class="share-card-desc">${escHtml(desc.slice(0, 80))}${desc.length > 80 ? '…' : ''}</span>` : '');
+
+  // Always show the action button — both sender and recipient can interact
+  const actionBtn = itemId
+    ? `<button class="invite-card-join-btn" onclick="_viewSharedItem('${escHtml(itemId)}','${escHtml(m.type)}','${escHtml(att.creatorEmail||'')}')">
+         ${isQuiz
+           ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg> Take Quiz`
+           : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> View Product`}
+       </button>`
+    : '';
+
+  return `<div class="invite-card share-card">
+    <div class="invite-card-header">
+      ${icon} ${escHtml(typeLabel)} from ${escHtml(creator)}
+    </div>
+    <div class="invite-card-body">
+      <div class="invite-card-room-name">${escHtml(title)}</div>
+      <div class="share-card-meta">
+        ${metaLine ? `<span class="invite-card-subject">${metaLine}</span>` : ''}
+        ${priceTag}
+      </div>
+    </div>
+    ${actionBtn}
+  </div>`;
+}
+
+async function _viewSharedItem(itemId, msgType, creatorEmail) {
+  const isQuiz = msgType === 'quiz_share';
+
+  if (isQuiz) {
+    // cfOpenQuiz (creator-feed.js) fetches the quiz from Supabase by ID
+    // and launches launchQuizPlayer — works for any user, not just the owner
+    if (typeof cfOpenQuiz === 'function') {
+      await cfOpenQuiz(itemId);
+    } else if (typeof previewQuiz === 'function') {
+      previewQuiz(itemId); // fallback if on creator page
+    } else {
+      showToast('Quiz player not available. Please refresh.');
+    }
+  } else {
+    // Navigate to the creator's profile where the product store is visible
+    // openUserProfile (app.js) opens the profile panel for any user
+    if (typeof openUserProfile === 'function') {
+      openUserProfile(creatorEmail || '');
+    } else if (typeof appNav === 'function') {
+      appNav('feed');
+      showToast('Find this product on the creator\'s profile!');
+    }
+  }
 }
 
 async function _acceptSubInvite(msgId, tierId, creatorEmail, btnEl) {
@@ -1064,6 +1145,8 @@ async function renderChatMessages(partnerEmail) {
       ? _buildInviteCardHTML(m, mine)
       : m.type === 'sub_invite'
       ? _buildSubInviteCardHTML(m, mine)
+      : (m.type === 'product_share' || m.type === 'quiz_share')
+      ? _buildShareCardHTML(m, mine)
       : `<div class="chat-bubble">${escHtml(m.text || '')}</div>`;
 
     parts.push(`

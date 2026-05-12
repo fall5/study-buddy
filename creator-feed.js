@@ -243,7 +243,7 @@ async function _cfSubmit(postType, itemId) {
           _fvUpdates.profile_visible = true;
           window._cfPendingProfileVisible = false;
         }
-        await sb.from(_fvTable).update(_fvUpdates).eq('id', itemId);
+        await window.sb.from(_fvTable).update(_fvUpdates).eq('id', itemId);
       }
     } catch(e) { console.warn('feed_visible:', e); }
 
@@ -289,9 +289,23 @@ async function _renderProductCard(post) {
   const purchases  = Array.isArray(p.purchases)   ? p.purchases   : [];
   const accessList = Array.isArray(p.access_list) ? p.access_list : [];
   const isOwn      = currentUser?.email === p.creator_email;
+
+  // Check the purchases table directly — covers purchases made via checkout
+  // (profile.js _recordPurchase writes here but does NOT update p.purchases)
+  let purchasedInTable = false;
+  if (currentUser && !isOwn && !isFree) {
+    const { data: purRows } = await window.sb.from('purchases')
+      .select('id')
+      .eq('user_email', currentUser.email)
+      .eq('product_id', p.id)
+      .limit(1);
+    purchasedInTable = Array.isArray(purRows) && purRows.length > 0;
+  }
+
   const alreadyHas = currentUser && (
     purchases.includes(currentUser.email) ||
-    accessList.includes(currentUser.email)
+    accessList.includes(currentUser.email) ||
+    purchasedInTable
   );
   const priceStr   = isFree ? 'Free' : `₱${Number(p.price).toLocaleString()}`;
   const typeIcons  = { notes:'📄', guide:'📘', cheatsheet:'⚡', flashcards:'🗂️', slides:'🖥️', template:'📋' };
@@ -499,7 +513,7 @@ async function cfPayForQuiz(quizId, quizTitle, price, creatorEmail, btn) {
 
     if (price <= 0) {
       // Free — record and open immediately
-      const { error: freeErr } = await sb.from('purchases').insert({
+      const { error: freeErr } = await window.sb.from('purchases').insert({
         id:           'purch_quiz_' + Date.now() + '_' + Math.random().toString(36).slice(2,5),
         user_email:   currentUser.email,
         product_id:   quizId,
@@ -525,7 +539,7 @@ async function cfPayForQuiz(quizId, quizTitle, price, creatorEmail, btn) {
       creatorEmail,
       btnEl: btn,
       onSuccess: async () => {
-        const { error: paidErr } = await sb.from('purchases').insert({
+        const { error: paidErr } = await window.sb.from('purchases').insert({
           id:           'purch_quiz_' + Date.now() + '_' + Math.random().toString(36).slice(2,5),
           user_email:   currentUser.email,
           product_id:   quizId,
@@ -738,6 +752,22 @@ function _openPublishPicker(postType, itemId) {
           </div>
           <div class="_cf-dest-check"></div>
         </div>
+        <div class="_cf-dest-opt" data-dest="messages">
+          <div class="_cf-dest-icon">💬</div>
+          <div style="flex:1;min-width:0">
+            <div class="_cf-dest-title">Send to Messages</div>
+            <div class="_cf-dest-desc">Share directly with a connected buddy via DM</div>
+          </div>
+          <div class="_cf-dest-check"></div>
+        </div>
+        <div class="_cf-dest-opt _cf-dest-session-opt" data-dest="session">
+          <div class="_cf-dest-icon">🖥️</div>
+          <div style="flex:1;min-width:0">
+            <div class="_cf-dest-title">Send to Session</div>
+            <div class="_cf-dest-desc _cf-session-desc">Checking session…</div>
+          </div>
+          <div class="_cf-dest-check"></div>
+        </div>
       </div>
       <div class="_cf-footer">
         <button class="_cf-cancel" onclick="_removeShareModal()">Cancel</button>
@@ -754,21 +784,42 @@ function _openPublishPicker(postType, itemId) {
   });
 
   document.body.appendChild(overlay);
+
+  // Patch session destination: label + disable if not in a session
+  const sessionOpt  = overlay.querySelector('._cf-dest-session-opt');
+  const sessionDesc = overlay.querySelector('._cf-session-desc');
+  const inSession   = (typeof activeRoomId !== 'undefined' && !!activeRoomId);
+  if (sessionDesc) sessionDesc.textContent = inSession ? 'Share in your active study session chat' : 'Join a session first to use this';
+  if (!inSession && sessionOpt) {
+    sessionOpt.classList.add('_cf-dest-opt-disabled');
+    sessionOpt.style.pointerEvents = 'none';
+    sessionOpt.style.opacity = '0.42';
+  }
 }
 
 async function _cfDestNext(postType, itemId) {
   const selected = [...document.querySelectorAll('._cf-dest-opt.selected')].map(o => o.dataset.dest);
   if (!selected.length) { showToast('Please select at least one destination.'); return; }
 
-  const profileChk = selected.includes('profile');
-  const feedChk    = selected.includes('feed');
+  const profileChk  = selected.includes('profile');
+  const feedChk     = selected.includes('feed');
+  const messagesChk = selected.includes('messages');
+  const sessionChk  = selected.includes('session');
 
   if (profileChk) {
     try {
       const table = postType === 'product' ? 'products' : 'quizzes';
-      await sb.from(table).update({ profile_visible: true }).eq('id', itemId);
+      await window.sb.from(table).update({ profile_visible: true }).eq('id', itemId);
     } catch(e) { console.error('profile publish:', e); showToast('Could not publish to profile.'); return; }
   }
+
+  if (messagesChk) {
+    // Open contact picker; it will handle remaining destinations after send
+    await _cfOpenMessagePicker(postType, itemId, { profileChk, feedChk, sessionChk });
+    return;
+  }
+
+  if (sessionChk) await _cfSendToSession(postType, itemId);
 
   if (feedChk) {
     window._cfPendingProfileVisible = !!profileChk;
@@ -780,6 +831,207 @@ async function _cfDestNext(postType, itemId) {
     showToast(`✅ Published to your ${dest}!`);
     if (typeof loadCreatorProducts === 'function' && postType === 'product') loadCreatorProducts(window._creatorUser || currentUser);
     if (typeof loadCreatorQuizzes  === 'function' && postType === 'quiz')    loadCreatorQuizzes(window._creatorUser || currentUser);
+  }
+}
+
+/* ─── Contact picker for "Send to Messages" ─────────────────── */
+async function _cfOpenMessagePicker(postType, itemId, pendingFlags) {
+  _removeShareModal();
+
+  const tableMap = { product: 'products', quiz: 'quizzes' };
+  let itemTitle = postType;
+  try {
+    if (tableMap[postType]) {
+      const rows = await sbSelect(tableMap[postType], { id: itemId });
+      itemTitle = rows[0]?.title || postType;
+    }
+  } catch(_) {}
+
+  const matches  = (await loadMatches())  || [];
+  const accounts = (await loadAccounts()) || [];
+  const connected = matches
+    .filter(m => m.status === 'accepted')
+    .map(m => m.from === currentUser.email ? m.to : m.from);
+
+  const buddies = connected.map(email => {
+    const u = accounts.find(a => a.email === email);
+    return {
+      email,
+      name:        u ? getDisplayName(u) : email,
+      init:        u ? getInitials(u)    : email[0].toUpperCase(),
+      avatarColor: typeof avatarColor === 'function' ? avatarColor(u) : '#0d2b42',
+    };
+  });
+
+  const overlay = _makeOverlay('_cf-share-modal');
+  overlay.innerHTML = `
+    <div class="_cf-box _cf-msg-box" onclick="event.stopPropagation()">
+      <div class="_cf-header">
+        <button class="_cf-back" onclick="_openPublishPicker('${postType}','${itemId}')">← Back</button>
+        <span class="_cf-title">Send to Messages</span>
+        <button class="_cf-close" onclick="_removeShareModal()">✕</button>
+      </div>
+      <p class="_cf-sub" style="margin-bottom:10px">Choose a buddy to send <strong>${escHtml(itemTitle)}</strong> to.</p>
+      <div class="_cf-search-wrap">
+        <svg class="_cf-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="_cf-buddy-search" class="_cf-search-input" placeholder="Search buddies…" autocomplete="off" />
+      </div>
+      <div id="_cf-buddy-list" class="_cf-buddy-list"></div>
+      <div class="_cf-footer" style="margin-top:12px">
+        <button class="_cf-cancel" onclick="_removeShareModal()">Cancel</button>
+        <button class="_cf-submit" id="_cf-msg-done-btn" style="display:none" onclick="_cfMessagePickerDone()">Done ✓</button>
+      </div>
+    </div>`;
+
+  // Store all state on the overlay — NO JSON embedded in onclick
+  overlay._cfBuddies   = buddies;
+  overlay._cfPostType  = postType;
+  overlay._cfItemId    = itemId;
+  overlay._cfPending   = pendingFlags;
+
+  document.body.appendChild(overlay);
+
+  // Render list and wire events
+  _cfRenderBuddyList(buddies);
+
+  // Search input listener
+  document.getElementById('_cf-buddy-search')?.addEventListener('input', () => {
+    const q = document.getElementById('_cf-buddy-search').value.toLowerCase();
+    const ov = document.getElementById('_cf-share-modal');
+    const filtered = (ov?._cfBuddies || []).filter(b =>
+      !q || b.name.toLowerCase().includes(q) || b.email.toLowerCase().includes(q)
+    );
+    _cfRenderBuddyList(filtered);
+  });
+}
+
+function _cfRenderBuddyList(buddies) {
+  const list = document.getElementById('_cf-buddy-list');
+  if (!list) return;
+
+  if (!buddies || !buddies.length) {
+    list.innerHTML = '<div class="_cf-buddy-empty">No connected buddies yet.<br>Connect with people in Find Buddies!</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  buddies.forEach(b => {
+    const row = document.createElement('div');
+    row.className = '_cf-buddy-row';
+    row.dataset.email = b.email;
+    row.innerHTML = `
+      <div class="_cf-buddy-av" style="background:${b.avatarColor}">${escHtml(b.init)}</div>
+      <div class="_cf-buddy-info">
+        <div class="_cf-buddy-name">${escHtml(b.name)}</div>
+        <div class="_cf-buddy-email">${escHtml(b.email)}</div>
+      </div>`;
+
+    const btn = document.createElement('button');
+    btn.className = '_cf-send-btn';
+    btn.type = 'button';
+    btn.textContent = 'Send';
+    btn.addEventListener('click', () => _cfSendItemToBuddy(btn, b.email));
+    row.appendChild(btn);
+    list.appendChild(row);
+  });
+}
+
+function _cfMessagePickerDone() {
+  const overlay      = document.getElementById('_cf-share-modal');
+  const postType     = overlay?._cfPostType || '';
+  const pendingFlags = overlay?._cfPending  || {};
+  _removeShareModal();
+  const dest = pendingFlags.sessionChk ? ' and session' : '';
+  showToast(`✅ Shared to messages${dest}!`);
+  if (typeof loadCreatorProducts === 'function' && postType === 'product') loadCreatorProducts(window._creatorUser || currentUser);
+  if (typeof loadCreatorQuizzes  === 'function' && postType === 'quiz')    loadCreatorQuizzes(window._creatorUser || currentUser);
+}
+
+async function _cfSendItemToBuddy(sendBtn, toEmail) {
+  if (!currentUser || !toEmail) return;
+  if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = 'Sending…'; }
+
+  const overlay      = document.getElementById('_cf-share-modal');
+  const postType     = overlay?._cfPostType || '';
+  const itemId       = overlay?._cfItemId   || '';
+  const pendingFlags = overlay?._cfPending  || {};
+
+  const typeLabel  = postType === 'product' ? 'product' : 'quiz';
+  const senderName = currentUser.name || currentUser.email.split('@')[0];
+  const msgType    = postType === 'quiz' ? 'quiz_share' : 'product_share';
+  const msgText    = `📌 ${senderName} shared a ${typeLabel} with you.`;
+
+  const tableMap = { product: 'products', quiz: 'quizzes' };
+  let attachment = { type: msgType, postType, itemId, creatorEmail: currentUser.email };
+  try {
+    if (tableMap[postType]) {
+      const rows = await sbSelect(tableMap[postType], { id: itemId });
+      const r    = rows[0] || {};
+      attachment = {
+        type:         msgType, postType, itemId,
+        title:        r.title        || '',
+        description:  r.description  || r.desc || '',
+        price:        r.price        || 0,
+        subject:      r.subject      || '',
+        creatorEmail: r.creator_email || currentUser.email,
+      };
+    }
+  } catch(_) {}
+
+  try {
+    const saved = await sendMessageToDB(toEmail, msgText, msgType, attachment);
+    if (!saved) throw new Error('sendMessageToDB returned null');
+
+    if (sendBtn) { sendBtn.textContent = '✓ Sent'; sendBtn.classList.add('_cf-send-btn-sent'); }
+    showToast(`📨 Shared with ${toEmail.split('@')[0]}!`);
+
+    const { feedChk, sessionChk, profileChk } = pendingFlags;
+    if (sessionChk) await _cfSendToSession(postType, itemId);
+    if (feedChk) {
+      window._cfPendingProfileVisible = !!profileChk;
+      window._cfPendingItemId         = itemId;
+      _removeShareModal();
+      _cfStep3(postType, itemId);
+    } else {
+      const doneBtn = document.getElementById('_cf-msg-done-btn');
+      if (doneBtn) doneBtn.style.display = '';
+    }
+  } catch(err) {
+    console.error('[CF] _cfSendItemToBuddy:', err);
+    if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = 'Send'; }
+    showToast('Could not send — please try again.');
+  }
+}
+
+async function _cfSendToSession(postType, itemId) {
+  if (typeof activeRoomId === 'undefined' || !activeRoomId || !currentUser) {
+    showToast('Join a session first to use this.');
+    return;
+  }
+  const typeLabel  = postType === 'product' ? 'product' : 'quiz';
+  const senderName = currentUser.name || currentUser.email.split('@')[0];
+  let itemTitle = typeLabel;
+  try {
+    const tableMap = { product: 'products', quiz: 'quizzes' };
+    if (tableMap[postType]) {
+      const rows = await sbSelect(tableMap[postType], { id: itemId });
+      itemTitle = rows[0]?.title || typeLabel;
+    }
+  } catch(_) {}
+
+  const body = `📌 ${senderName} shared a ${typeLabel}: "${itemTitle}"`;
+  try {
+    const { error } = await window.sb.from('room_messages').insert({
+      id:         'rm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      session_id: activeRoomId,
+      from_email: currentUser.email,
+      body,
+    });
+    if (error) throw error;
+    if (typeof renderRoomChat === 'function') await renderRoomChat();
+  } catch(err) {
+    console.error('[CF] _cfSendToSession:', err);
+    showToast('Could not send to session — try again.');
   }
 }
 
@@ -1002,6 +1254,100 @@ async function _cfDestNext(postType, itemId) {
   .cf-cta-locked {
     background: var(--accent); color: var(--text-light);
     border: 1.5px solid var(--border-panel);
+  }
+
+  /* ─── DESTINATION DISABLED STATE ────────────────────────────── */
+  ._cf-dest-opt-disabled {
+    opacity: .42 !important;
+    pointer-events: none !important;
+    cursor: not-allowed;
+  }
+
+  /* ─── MESSAGE PICKER BOX ─────────────────────────────────── */
+  ._cf-msg-box {
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ─── SEARCH BAR ───────────────────────────────────────────── */
+  ._cf-search-wrap {
+    position: relative;
+    margin-bottom: 10px;
+  }
+  ._cf-search-icon {
+    position: absolute;
+    left: 11px; top: 50%; transform: translateY(-50%);
+    width: 15px; height: 15px;
+    color: var(--text-light);
+    pointer-events: none;
+  }
+  ._cf-search-input {
+    width: 100%; box-sizing: border-box;
+    padding: 10px 14px 10px 34px;
+    border: 1.5px solid var(--border-card);
+    border-radius: 10px;
+    font-size: .84rem;
+    font-family: var(--font-body, sans-serif);
+    background: var(--bg-panel);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color .15s;
+  }
+  ._cf-search-input::placeholder { color: var(--text-light); opacity: 1; }
+  ._cf-search-input:focus { border-color: var(--brand-accent, #c8882a); }
+
+  /* ─── BUDDY LIST ───────────────────────────────────────────── */
+  ._cf-buddy-list {
+    overflow-y: auto; flex: 1;
+    display: flex; flex-direction: column; gap: 2px;
+    padding-bottom: 8px;
+  }
+  ._cf-buddy-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 12px;
+    background: transparent;
+    transition: background .15s;
+  }
+  ._cf-buddy-row:hover { background: var(--accent, rgba(13,43,66,.08)); }
+  ._cf-buddy-av {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .8rem; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  ._cf-buddy-info { flex: 1; min-width: 0; }
+  ._cf-buddy-name {
+    font-weight: 700; font-size: .86rem; color: var(--text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  ._cf-buddy-email {
+    font-size: .74rem; color: var(--text-light);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  ._cf-buddy-empty {
+    padding: 20px 0; text-align: center;
+    font-size: .84rem; color: var(--text-light); line-height: 1.6;
+  }
+
+  /* ─── SEND BUTTON (inside buddy row) ───────────────────────── */
+  ._cf-send-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 7px 16px;
+    background: var(--brand-base, #0d2b42);
+    color: #fff;
+    border: none; border-radius: 20px;
+    font-size: .78rem; font-weight: 700;
+    font-family: var(--font-body, sans-serif);
+    cursor: pointer; flex-shrink: 0;
+    transition: background .15s, opacity .15s;
+    white-space: nowrap;
+    min-width: 58px;
+  }
+  ._cf-send-btn:hover:not(:disabled) { background: var(--navy-base, #071d2e); }
+  ._cf-send-btn:disabled { opacity: .55; cursor: not-allowed; }
+  ._cf-send-btn._cf-send-btn-sent {
+    background: #16a34a;
+    cursor: default;
   }
   `;
   document.head.appendChild(s);

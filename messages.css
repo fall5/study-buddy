@@ -1291,3 +1291,53 @@ body.night .msg-conv-item.active { background: rgba(91,163,217,.1); }
 body.night .msg-conv-name { color: var(--text-primary); }
 body.night .msg-conv-preview { color: var(--text-sub); }
 body.night .gc-badge { background: var(--brand-base); color: var(--navy-dark); }
+/* ══════════════════════════════════════════════════════════════
+   PRODUCT / QUIZ SHARE CARD
+   Extends .invite-card — same border-radius, header, join-btn.
+   Extra classes for price tag, free badge, description line.
+══════════════════════════════════════════════════════════════ */
+.share-card .invite-card-header {
+  background: linear-gradient(135deg, #0d2b42, #1e4d73);
+}
+.share-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.share-card-price {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: .78rem; font-weight: 800;
+  color: var(--brand-base);
+  background: var(--accent);
+  border: 1px solid var(--border-panel);
+  border-radius: 99px;
+  padding: 2px 10px;
+}
+.share-card-free {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: .78rem; font-weight: 800;
+  color: #16a34a;
+  background: rgba(22,163,74,.1);
+  border: 1px solid rgba(22,163,74,.25);
+  border-radius: 99px;
+  padding: 2px 10px;
+}
+.share-card-desc {
+  font-size: .72rem;
+  color: var(--text-light);
+  line-height: 1.4;
+}
+
+/* Night mode */
+body.night .share-card-price {
+  background: rgba(91,163,217,.12);
+  border-color: rgba(91,163,217,.2);
+}
+body.night .share-card-free {
+  background: rgba(22,163,74,.12);
+  border-color: rgba(22,163,74,.2);
+}

@@ -864,6 +864,35 @@ body.night .sidebar-item-creator {
 .cp-stat svg { width: 10px; height: 10px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 2; }
 .cp-stat-div { width: 1px; height: 10px; background: var(--border-card); flex-shrink: 0; transition: background var(--trans); }
 .cp-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+
+/* ── Product store CTA button (profile.js public product cards) ── */
+.cp-btn-cta {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--brand-base);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .18s, transform .12s;
+  text-align: center;
+}
+.cp-btn-cta:hover:not(:disabled)  { background: var(--navy-light); transform: translateY(-1px); }
+.cp-btn-cta:active:not(:disabled) { transform: translateY(0); }
+.cp-btn-cta--owned {
+  background: var(--bg-panel);
+  color: var(--text-muted);
+  border: 1.5px solid var(--border-card);
+  cursor: default;
+}
+body.night .cp-btn-cta--owned {
+  background: var(--bg-card);
+  border-color: var(--border-card);
+  color: var(--text-light);
+}
 .cp-btn-secondary {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 6px 12px; border-radius: 8px;

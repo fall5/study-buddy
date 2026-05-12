@@ -1366,7 +1366,7 @@ async function _recordFreePurchase(productId, title, btnEl) {
 async function _recordPurchase(productId, title, price, btnEl) {
   if (!currentUser) return;
 
-  // Write purchase record to Supabase
+  // Write purchase record to the purchases table
   const { error } = await sb.from('purchases').insert({
     id:           'pur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
     user_email:   currentUser.email,
@@ -1379,6 +1379,22 @@ async function _recordPurchase(productId, title, price, btnEl) {
     showToast('Purchase could not be recorded. Please try again.');
     if (btnEl) { btnEl.disabled = false; }
     return;
+  }
+
+  // Also update p.purchases + p.access_list on the product row so the feed
+  // card's local array checks stay in sync for future renders without a re-query.
+  try {
+    const { data: prod } = await sb.from('products').select('purchases,access_list').eq('id', productId).maybeSingle();
+    if (prod) {
+      const purchases  = Array.isArray(prod.purchases)   ? [...prod.purchases]   : [];
+      const accessList = Array.isArray(prod.access_list) ? [...prod.access_list] : [];
+      if (!purchases.includes(currentUser.email))  purchases.push(currentUser.email);
+      if (!accessList.includes(currentUser.email)) accessList.push(currentUser.email);
+      await sb.from('products').update({ purchases, access_list: accessList }).eq('id', productId);
+    }
+  } catch (syncErr) {
+    // Non-fatal — purchases table is the source of truth
+    console.warn('_recordPurchase: product row sync failed:', syncErr.message);
   }
 
   // Optimistic UI — update the triggering button
@@ -1480,34 +1496,119 @@ function openProfileEdit() {
   modal.className = 'modal-overlay';
 
   modal.innerHTML = `
-    <div class="modal-box" style="max-width:520px;text-align:left;padding:32px;max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
-      <h3 class="modal-title">Edit Profile</h3>
-      <div class="profile-edit-form">
-        <div class="profile-field"><label>Display Name</label><input type="text" id="pe-name" placeholder="Your full name"/></div>
-        <div class="profile-field"><label>Bio</label><textarea id="pe-bio" rows="3" placeholder="Tell others about yourself…"></textarea></div>
-        <div class="profile-field"><label>Course / Headline</label><input type="text" id="pe-headline" placeholder="e.g. BS Computer Science — 3rd Year"/></div>
-        <div class="profile-field"><label>Preferred Schedule</label>
-          <select id="pe-schedule"><option value="">Any</option><option>Morning</option><option>Afternoon</option><option>Evening</option><option>Weekends</option></select></div>
-        <div class="profile-field"><label>Study Style</label>
-          <select id="pe-style"><option value="">Any</option><option>Visual learner</option><option>Audio learner</option><option>Group study</option><option>Solo study</option><option>Pomodoro</option></select></div>
-        <div class="profile-field"><label>Location</label>
-          <select id="pe-location"><option value="">Any</option><option>Online</option><option>Library</option><option>Campus</option><option>Café</option><option>Dormitory</option></select></div>
+    <div class="pe-modal-box" onclick="event.stopPropagation()">
+      <div class="pe-modal-header">
+        <h3 class="pe-modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Edit Profile
+        </h3>
+        <button class="pe-modal-close" onclick="closeProfileEdit()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="pe-form">
 
-        <!-- ── Subject picker ── -->
-        <div class="profile-field">
-          <label>Study Subjects <span style="font-weight:400;color:var(--text-light);font-size:.8rem">(up to 5)</span></label>
+        <!-- Basic Info -->
+        <div class="pe-section">
+          <div class="pe-section-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Basic Info
+          </div>
+          <div class="pe-field">
+            <label class="pe-label" for="pe-name">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Display Name
+            </label>
+            <input class="pe-input" type="text" id="pe-name" placeholder="Your full name" />
+          </div>
+          <div class="pe-field">
+            <label class="pe-label" for="pe-bio">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Bio
+            </label>
+            <textarea class="pe-input pe-textarea" id="pe-bio" rows="3" placeholder="Tell others about yourself…"></textarea>
+          </div>
+          <div class="pe-field">
+            <label class="pe-label" for="pe-headline">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              Course / Headline
+            </label>
+            <input class="pe-input" type="text" id="pe-headline" placeholder="e.g. BS Computer Science — 3rd Year" />
+          </div>
+        </div>
+
+        <!-- Study Preferences -->
+        <div class="pe-section">
+          <div class="pe-section-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Study Preferences
+          </div>
+          <div class="pe-prefs-grid">
+            <div class="pe-field">
+              <label class="pe-label" for="pe-schedule">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Preferred Schedule
+              </label>
+              <div class="pe-select-wrap">
+                <select class="pe-select" id="pe-schedule">
+                  <option value="">Any time</option>
+                  <option>Morning</option><option>Afternoon</option><option>Evening</option><option>Weekends</option>
+                </select>
+                <svg class="pe-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </div>
+            <div class="pe-field">
+              <label class="pe-label" for="pe-style">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                Study Style
+              </label>
+              <div class="pe-select-wrap">
+                <select class="pe-select" id="pe-style">
+                  <option value="">Any style</option>
+                  <option>Visual learner</option><option>Audio learner</option><option>Group study</option><option>Solo study</option><option>Pomodoro</option>
+                </select>
+                <svg class="pe-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </div>
+            <div class="pe-field">
+              <label class="pe-label" for="pe-location">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Study Location
+              </label>
+              <div class="pe-select-wrap">
+                <select class="pe-select" id="pe-location">
+                  <option value="">Any location</option>
+                  <option>Online</option><option>Library</option><option>Campus</option><option>Café</option><option>Dormitory</option>
+                </select>
+                <svg class="pe-select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Study Subjects -->
+        <div class="pe-section">
+          <div class="pe-section-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Study Subjects
+            <span class="pe-section-hint">Pick up to 5</span>
+          </div>
           <div class="pe-subject-chips" id="pe-subject-chips"></div>
-          <div class="pe-subject-search-wrap">
+          <div class="pe-subject-search-wrap" id="pe-subject-search-wrap">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="pe-subject-input" placeholder="Search subjects…" autocomplete="off" />
           </div>
           <div class="pe-subject-dropdown" id="pe-subject-dropdown" style="display:none"></div>
+          <div class="pe-subjects-browse" id="pe-subjects-browse"></div>
         </div>
 
         <div id="pe-error" class="login-error" style="display:none"></div>
-        <div style="display:flex;gap:10px;margin-top:8px">
+        <div class="pe-modal-footer">
           <button class="modal-cancel" onclick="closeProfileEdit()">Cancel</button>
-          <button class="profile-save-btn" onclick="saveProfileEdit()">Save Changes</button>
+          <button class="profile-save-btn" onclick="saveProfileEdit()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+            Save Changes
+          </button>
         </div>
       </div>
     </div>`;
@@ -1536,11 +1637,40 @@ function openProfileEdit() {
         ${escHtml(s)}
         <button type="button" onclick="_peRemoveSubject('${escHtml(s).replace(/'/g,"\\'")}')">×</button>
       </span>`).join('');
-    // Hide input when at cap
+    const atCap = selectedSubjects.length >= 5;
+    const sw = document.getElementById('pe-subject-search-wrap');
+    if (sw) sw.style.display = atCap ? 'none' : '';
+    const br = document.getElementById('pe-subjects-browse');
+    if (br) br.style.display = atCap ? 'none' : '';
     const inp = document.getElementById('pe-subject-input');
-    if (inp) inp.style.display = selectedSubjects.length >= 5 ? 'none' : '';
-    const wrap2 = document.querySelector('.pe-subject-search-wrap');
-    if (wrap2) wrap2.style.display = selectedSubjects.length >= 5 ? 'none' : '';
+    if (inp) inp.style.display = atCap ? 'none' : '';
+    renderBrowse(document.getElementById('pe-subject-input')?.value.trim() || '');
+  }
+
+  function renderBrowse(query) {
+    const br = document.getElementById('pe-subjects-browse');
+    if (!br) return;
+    const cats = typeof SUBJECTS_BY_CATEGORY !== 'undefined' ? SUBJECTS_BY_CATEGORY : {};
+    const q = (query || '').toLowerCase();
+    let html = '';
+    for (const [cat, subjects] of Object.entries(cats)) {
+      const visible = subjects.filter(s => !q || s.toLowerCase().includes(q));
+      if (!visible.length) continue;
+      html += `<div class="pe-browse-cat">
+        <div class="pe-browse-cat-label">${escHtml(cat)}</div>
+        <div class="pe-browse-pills">
+          ${visible.map(s => {
+            const sel = selectedSubjects.includes(s);
+            return `<button type="button"
+              class="pe-browse-pill${sel ? ' selected' : ''}"
+              ${sel ? 'disabled' : `onclick="_peAddSubject('${escHtml(s).replace(/'/g,"\\'")}')"`}>
+              ${escHtml(s)}${sel ? ' ✓' : ''}
+            </button>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }
+    br.innerHTML = html || '<p class="pe-browse-empty">No subjects match your search.</p>';
   }
 
   window._peSelectedSubjects = selectedSubjects;
@@ -1579,9 +1709,12 @@ function openProfileEdit() {
 
   const inp = document.getElementById('pe-subject-input');
   if (inp) {
-    inp.addEventListener('input',  () => renderDropdown(inp.value.trim()));
-    inp.addEventListener('focus',  () => { if (inp.value.trim()) renderDropdown(inp.value.trim()); });
-    inp.addEventListener('blur',   () => setTimeout(() => {
+    inp.addEventListener('input', () => {
+      renderDropdown(inp.value.trim());
+      renderBrowse(inp.value.trim());
+    });
+    inp.addEventListener('focus', () => { if (inp.value.trim()) renderDropdown(inp.value.trim()); });
+    inp.addEventListener('blur',  () => setTimeout(() => {
       const dd = document.getElementById('pe-subject-dropdown');
       if (dd) dd.style.display = 'none';
     }, 150));

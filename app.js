@@ -775,29 +775,29 @@ async function loadAdPool() {
 
     let allItems = [...products, ...quizzes];
 
-    // ── Two-tier subject targeting ──
+    // ── Subject-based ad targeting ──
+    // If the user has chosen subjects: only show ads from matching subjects
+    // or the same category. Completely unrelated subjects are excluded.
+    // If the user has no subjects set: show everything (shuffled).
     const userSubjects   = (currentUser && Array.isArray(currentUser.subjects)) ? currentUser.subjects : [];
     const userCategories = (typeof getSubjectCategories === 'function')
       ? getSubjectCategories(userSubjects) : [];
     const catMap         = (typeof SUBJECT_CATEGORY_MAP !== 'undefined') ? SUBJECT_CATEGORY_MAP : {};
 
     if (userSubjects.length) {
+      // Tier 1: exact subject match
       const tier1 = allItems.filter(item => userSubjects.includes(item.subject));
+      // Tier 2: same category as one of the user's subjects
       const tier2 = allItems.filter(item =>
         !userSubjects.includes(item.subject) &&
         userCategories.includes(catMap[item.subject])
       );
-      const rest  = allItems.filter(item =>
-        !userSubjects.includes(item.subject) &&
-        !userCategories.includes(catMap[item.subject])
-      );
-      // Shuffle each tier separately, then concatenate — targeted items come first
-      allItems = [
-        ..._adShuffle(tier1),
-        ..._adShuffle(tier2),
-        ..._adShuffle(rest),
-      ];
+      // Only use tier1 + tier2 — exclude completely unrelated subjects
+      const relevant = [..._adShuffle(tier1), ..._adShuffle(tier2)];
+      // Fallback: if nothing relevant exists yet, show everything so ads aren't empty
+      allItems = relevant.length ? relevant : _adShuffle(allItems);
     } else {
+      // No subjects set — show all available ads shuffled
       allItems = _adShuffle(allItems);
     }
 
@@ -2345,7 +2345,7 @@ function buildPostHTML(p, accounts, ctx = {}) {
     ${imagesHTML}
     ${videosHTML}
     ${filesHTML}
-    ${tags.length ? `<div class="post-tags">${tags.map(t=>`<span class="post-tag">${escHtml(t)}</span>`).join('')}</div>` : ''}
+
 
     <!-- Action bar -->
     <div class="post-actions">
@@ -2813,15 +2813,258 @@ async function cancelJoinRequest(postId, btn) {
 }
 
 function sharePost(postId) {
+  // Close any existing share menu first
+  closeShareMenu();
+
+  // Build the share menu
+  const menu = document.createElement('div');
+  menu.id = 'share-menu';
+  menu.className = 'share-menu';
+
+  const postUrl = window.location.href.split('#')[0] + '#post_' + postId;
+
+  menu.innerHTML = `
+    <div class="share-menu-header">
+      <span class="share-menu-title">Share Post</span>
+      <button class="share-menu-close" onclick="closeShareMenu()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="share-menu-options">
+      <button class="share-menu-option" onclick="sharePostCopyLink('${escHtml(postId)}')">
+        <span class="share-menu-icon share-icon-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </span>
+        <div class="share-menu-label">
+          <span class="share-menu-label-main">Copy Link</span>
+          <span class="share-menu-label-sub">Copy post URL to clipboard</span>
+        </div>
+      </button>
+      <button class="share-menu-option" onclick="sharePostToMessages('${escHtml(postId)}')">
+        <span class="share-menu-icon share-icon-msg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </span>
+        <div class="share-menu-label">
+          <span class="share-menu-label-main">Send to Messages</span>
+          <span class="share-menu-label-sub">Share with a connected buddy</span>
+        </div>
+      </button>
+      <button class="share-menu-option ${!activeRoomId ? 'share-menu-option-disabled' : ''}"
+              onclick="sharePostToSession('${escHtml(postId)}')"
+              ${!activeRoomId ? 'title="Join a session to use this"' : ''}>
+        <span class="share-menu-icon share-icon-session">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </span>
+        <div class="share-menu-label">
+          <span class="share-menu-label-main">Send to Session</span>
+          <span class="share-menu-label-sub">${activeRoomId ? 'Share in your active study session' : 'Join a session first'}</span>
+        </div>
+      </button>
+    </div>`;
+
+  // Overlay backdrop
+  const backdrop = document.createElement('div');
+  backdrop.id = 'share-menu-backdrop';
+  backdrop.className = 'share-menu-backdrop';
+  backdrop.onclick = closeShareMenu;
+
+  document.body.appendChild(backdrop);
+  document.body.appendChild(menu);
+
+  // Animate in
+  requestAnimationFrame(() => {
+    menu.classList.add('share-menu-open');
+    backdrop.classList.add('share-menu-backdrop-open');
+  });
+
+  // Store postUrl for use by sub-functions
+  menu._postUrl = postUrl;
+  menu._postId  = postId;
+}
+
+function closeShareMenu() {
+  const menu     = document.getElementById('share-menu');
+  const backdrop = document.getElementById('share-menu-backdrop');
+  if (menu) {
+    menu.classList.remove('share-menu-open');
+    setTimeout(() => menu.remove(), 220);
+  }
+  if (backdrop) {
+    backdrop.classList.remove('share-menu-backdrop-open');
+    setTimeout(() => backdrop.remove(), 220);
+  }
+  // Also close the contact picker if open
+  const picker = document.getElementById('share-contact-picker');
+  if (picker) picker.remove();
+}
+
+function sharePostCopyLink(postId) {
   const url = window.location.href.split('#')[0] + '#post_' + postId;
   if (navigator.clipboard) {
     navigator.clipboard.writeText(url).catch(() => fallbackCopy(url));
   } else {
     fallbackCopy(url);
   }
-  showShareToast();
-  
   history.replaceState(null, '', '#post_' + postId);
+  closeShareMenu();
+  showToast('🔗 Link copied to clipboard!');
+}
+
+async function sharePostToMessages(postId) {
+  if (!currentUser) return;
+
+  // Load connected buddies
+  const matches  = await loadMatches();
+  const accounts = await loadAccounts();
+  const connected = matches
+    .filter(m => m.status === 'accepted')
+    .map(m => m.from === currentUser.email ? m.to : m.from);
+
+  const buddies = connected.map(email => {
+    const u = accounts.find(a => a.email === email);
+    return {
+      email,
+      name:        u ? getDisplayName(u) : email,
+      init:        u ? getInitials(u)    : email[0].toUpperCase(),
+      avatarColor: avatarColor(u),
+    };
+  });
+
+  // Replace share menu content with contact picker
+  const menu = document.getElementById('share-menu');
+  if (!menu) return;
+
+  menu.innerHTML = `
+    <div class="share-menu-header">
+      <button class="share-menu-back" onclick="sharePost('${escHtml(postId)}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="share-menu-title">Send to Messages</span>
+      <button class="share-menu-close" onclick="closeShareMenu()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="share-contact-search-wrap">
+      <svg class="share-contact-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="share-contact-search" class="share-contact-search" placeholder="Search buddies…"
+             oninput="_filterShareContacts()" autocomplete="off" />
+    </div>
+    <div class="share-contact-list" id="share-contact-list">
+      ${buddies.length === 0
+        ? '<div class="share-no-contacts">No connected buddies yet.<br>Connect with people in Find Buddies!</div>'
+        : buddies.map(b => `
+          <button class="share-contact-row" onclick="_sendPostToBuddy('${escHtml(postId)}','${escHtml(b.email)}',this)">
+            <div class="share-contact-av" style="background:${b.avatarColor}">${escHtml(b.init)}</div>
+            <div class="share-contact-info">
+              <span class="share-contact-name">${escHtml(b.name)}</span>
+              <span class="share-contact-email">${escHtml(b.email)}</span>
+            </div>
+            <span class="share-contact-send-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </span>
+          </button>`).join('')
+      }
+    </div>`;
+
+  // Store buddies on menu for filtering
+  menu._shareBuddies = buddies;
+  menu._sharePostId  = postId;
+}
+
+function _filterShareContacts() {
+  const q = (document.getElementById('share-contact-search')?.value || '').toLowerCase();
+  const menu = document.getElementById('share-menu');
+  if (!menu) return;
+  const buddies = menu._shareBuddies || [];
+  const postId  = menu._sharePostId  || '';
+  const list    = document.getElementById('share-contact-list');
+  if (!list) return;
+
+  const filtered = buddies.filter(b =>
+    !q || b.name.toLowerCase().includes(q) || b.email.toLowerCase().includes(q)
+  );
+
+  if (!filtered.length) {
+    list.innerHTML = '<div class="share-no-contacts">No buddies match your search.</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(b => `
+    <button class="share-contact-row" onclick="_sendPostToBuddy('${escHtml(postId)}','${escHtml(b.email)}',this)">
+      <div class="share-contact-av" style="background:${b.avatarColor}">${escHtml(b.init)}</div>
+      <div class="share-contact-info">
+        <span class="share-contact-name">${escHtml(b.name)}</span>
+        <span class="share-contact-email">${escHtml(b.email)}</span>
+      </div>
+      <span class="share-contact-send-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </span>
+    </button>`).join('');
+}
+
+async function _sendPostToBuddy(postId, toEmail, btn) {
+  if (!currentUser || !toEmail) return;
+  if (btn) { btn.disabled = true; }
+
+  const postUrl  = window.location.href.split('#')[0] + '#post_' + postId;
+  const senderName = currentUser.name || currentUser.email.split('@')[0];
+
+  // Build the message text with the link
+  const text = `📌 ${senderName} shared a post with you: ${postUrl}`;
+
+  try {
+    const saved = await sendMessageToDB(toEmail, text, 'text', null);
+    if (!saved) throw new Error('sendMessageToDB returned null');
+
+    // Mark row as sent
+    if (btn) {
+      btn.innerHTML = `
+        <div class="share-contact-av" style="${btn.querySelector('.share-contact-av')?.getAttribute('style') || ''}">
+          ${btn.querySelector('.share-contact-av')?.textContent || ''}
+        </div>
+        <div class="share-contact-info">
+          <span class="share-contact-name">${btn.querySelector('.share-contact-name')?.textContent || toEmail}</span>
+          <span class="share-contact-email">${escHtml(toEmail)}</span>
+        </div>
+        <span class="share-contact-sent-label">✓ Sent</span>`;
+      btn.classList.add('share-contact-sent');
+    }
+
+    showToast(`📨 Post shared with ${toEmail.split('@')[0]}!`);
+  } catch (err) {
+    console.error('[Share] _sendPostToBuddy:', err);
+    if (btn) btn.disabled = false;
+    showToast('Could not send — please try again.');
+  }
+}
+
+async function sharePostToSession(postId) {
+  if (!activeRoomId || !currentUser) {
+    showToast('Join a session first to use this.');
+    return;
+  }
+
+  const postUrl    = window.location.href.split('#')[0] + '#post_' + postId;
+  const senderName = currentUser.name || currentUser.email.split('@')[0];
+  const body       = `📌 ${senderName} shared a post: ${postUrl}`;
+
+  try {
+    const { error } = await sb.from('room_messages').insert({
+      id:         'rm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      session_id: activeRoomId,
+      from_email: currentUser.email,
+      body,
+    });
+    if (error) throw error;
+
+    // Refresh room chat if visible
+    if (typeof renderRoomChat === 'function') await renderRoomChat();
+
+    closeShareMenu();
+    showToast('📌 Post shared to session chat!');
+  } catch (err) {
+    console.error('[Share] sharePostToSession:', err);
+    showToast('Could not send to session — try again.');
+  }
 }
 
 function fallbackCopy(text) {
@@ -2833,10 +3076,8 @@ function fallbackCopy(text) {
 }
 
 function showShareToast() {
-  const toast = document.getElementById('share-toast');
-  if (!toast) return;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2500);
+  // Kept for compatibility — delegates to showToast
+  showToast('🔗 Link copied to clipboard!');
 }
 
 function openLightbox(src) {
@@ -4444,10 +4685,13 @@ async function renderRoomChat() {
   if (error) { console.error('[Chat] renderRoomChat:', error.message); return; }
 
   // Normalise rows to the shape the rest of the function expects
-  const msgs     = (rows || []).map(r => ({
-    from: r.from_email,
-    body: r.body,
-    ts:   new Date(r.created_at).getTime(),
+  const msgs = (rows || []).map(r => ({
+    id:         r.id,
+    from:       r.from_email,
+    body:       r.body,
+    ts:         new Date(r.created_at).getTime(),
+    type:       r.type       || 'text',
+    attachment: r.attachment || null,
   }));
   const accounts = await loadAccounts();
 
@@ -4481,10 +4725,21 @@ async function renderRoomChat() {
     const senderName = u ? u.name.split(' ')[0] : m.from;
     const timeStr   = formatShortTime(m.ts);
 
+    // Build bubble or interactive share card
+    const isShareCard = (m.type === 'product_share' || m.type === 'quiz_share');
+    let bubbleInner;
+    if (isShareCard && typeof _buildShareCardHTML === 'function') {
+      // _buildShareCardHTML expects a messages-style object with .attachment
+      // Pass false so the action button always shows in session chat for all participants
+      bubbleInner = _buildShareCardHTML({ type: m.type, attachment: m.attachment }, false);
+    } else {
+      bubbleInner = `<div class="rchat-bubble">${escHtml(m.body)}</div>`;
+    }
+
     parts.push(`
     <div class="rchat-msg ${mine ? 'mine' : 'theirs'} ${isNewSender ? 'new-sender' : ''}">
       ${isNewSender && !mine ? `<div class="rchat-sender">${escHtml(senderName)}</div>` : ''}
-      <div class="rchat-bubble">${escHtml(m.body)}</div>
+      ${bubbleInner}
       <div class="rchat-time">${escHtml(timeStr)}</div>
     </div>`);
   });
@@ -4743,6 +4998,40 @@ async function _confirmSubscription(creatorEmail, subOrId) {
     price:        Number(sub.price) || 0,
     since:        Date.now(),
   }]);
+
+  // ── Auto-connect subscriber ↔ creator as accepted buddies ─────────────────
+  // Uses the upsert_accepted_match Postgres function (added in schema patch v10)
+  // which handles duplicate rows, direction normalisation, and conflict resolution
+  // atomically in the DB — no race conditions, no silent duplicate rows.
+  try {
+    const { error: rpcErr } = await sb.rpc('upsert_accepted_match', {
+      p_user:    currentUser.email,
+      p_creator: creatorEmail,
+    });
+    if (rpcErr) {
+      // RPC not yet deployed — fall back to direct upsert
+      console.warn('[StudyBuddy] RPC unavailable, using fallback insert:', rpcErr.message);
+      await sb.from('matches').upsert({
+        id:         'match_sub_' + Date.now(),
+        from_email: currentUser.email,
+        to_email:   creatorEmail,
+        status:     'accepted',
+      }, { onConflict: 'from_email,to_email', ignoreDuplicates: false });
+    }
+
+    // Refresh all buddy UI immediately
+    if (typeof refreshBuddyConnectionUI === 'function') {
+      await refreshBuddyConnectionUI();
+    } else {
+      if (typeof _invalidateMatchCache === 'function') _invalidateMatchCache();
+    }
+
+    // Bust participants-panel cache so session invite list is also fresh
+    if (typeof _ppBuddyCache !== 'undefined') _ppBuddyCache = null;
+
+  } catch (e) {
+    console.error('[StudyBuddy] Auto-buddy on subscribe failed:', e);
+  }
 
   showToast(`✅ Subscribed to "${escHtml(sub.name || 'Subscription')}"! ₱${sub.price || 0}/month`);
   await renderFeed();
